@@ -965,33 +965,36 @@ function startDataListeners(){
     cachedFacilitators = snap.val() || {};
     dataLoaded.facilitators = true;
     renderFacilitatorSelects();
-    renderFacilitatorsPage();
-    renderCoursesPage();
-    renderOverview();
+    renderAllPages();
   });
 
   onValue(ref(db, 'lmis_courses'), (snap) => {
     cachedCourses = snap.val() || {};
     dataLoaded.courses = true;
     renderCourseSelects();
-    renderCoursesPage();
-    renderOverview();
-    renderLearnersPage();
+    renderAllPages();
   });
 
   onValue(ref(db, 'lmis_learners'), (snap) => {
     cachedLearners = snap.val() || {};
     dataLoaded.learners = true;
-    renderLearnersPage();
-    renderOverview();
+    renderAllPages();
   });
 
   onValue(ref(db, 'lmis_enrollments'), (snap) => {
     cachedEnrollments = snap.val() || {};
     dataLoaded.enrollments = true;
-    renderLearnersPage();
-    renderOverview();
+    renderAllPages();
   });
+}
+
+// Every listener calls this so that whichever data source finishes loading
+// last is the one that clears every page's skeleton, not just its own.
+function renderAllPages(){
+  renderOverview();
+  renderLearnersPage();
+  renderCoursesPage();
+  renderFacilitatorsPage();
 }
 
 // ---------------- SKELETON LOADERS ----------------
