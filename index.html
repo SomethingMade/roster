@@ -567,6 +567,10 @@
   .pill.submitted{background:var(--amber-tint);color:var(--amber);}
   .pill.approved{background:var(--teal-tint);color:var(--teal);}
   .pill.rejected{background:var(--coral-tint);color:var(--coral);}
+  .pill.new{background:var(--violet-tint);color:var(--violet);}
+  .pill.contacted{background:var(--amber-tint);color:var(--amber);}
+  .pill.converted{background:var(--teal-tint);color:var(--teal);}
+  .pill.closed{background:var(--canvas-line);color:var(--text-soft);}
   .empty-state{
     padding:46px 10px;text-align:center;color:var(--text-soft);
     font-size:14px;
@@ -618,6 +622,64 @@
   }
   .poe-check-row select:focus{border-color:var(--violet);}
   .poe-save-row{display:flex;justify-content:flex-end;margin-top:12px;}
+
+  /* ---------- Enquiry detail actions ---------- */
+  .detail-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;flex-wrap:wrap;}
+  .btn-convert{
+    padding:9px 18px;background:var(--teal);color:#fff;border:none;
+    border-radius:var(--pill);font-size:13px;font-weight:600;
+    display:inline-flex;align-items:center;transition:background .15s ease;
+  }
+  .btn-convert:hover{background:#129e80;}
+  .btn-convert:disabled{opacity:0.55;cursor:default;}
+
+  /* ---------- Communication ---------- */
+  .comm-tabs{display:flex;gap:8px;margin-bottom:22px;}
+  .comm-tab{
+    padding:9px 18px;border-radius:var(--pill);border:1px solid var(--line-strong);
+    background:var(--shell);font-size:13.5px;font-weight:600;color:var(--text-soft);
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .comm-tab.active{background:var(--violet);color:#fff;border-color:var(--violet);}
+  .comm-panel{display:none;}
+  .comm-panel.active{display:block;}
+
+  .announcement-card{
+    background:var(--shell);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;margin-bottom:14px;box-shadow:0 10px 26px rgba(20,21,43,0.05);
+  }
+  .announcement-card .ann-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:6px;}
+  .announcement-card h3{font-family:var(--font-display);font-size:15.5px;font-weight:700;margin:0;}
+  .announcement-card .ann-meta{
+    font-size:11.5px;color:var(--violet);background:var(--violet-tint);
+    padding:3px 10px;border-radius:var(--pill);white-space:nowrap;flex-shrink:0;
+  }
+  .announcement-card p{margin:0;font-size:13.5px;color:var(--text-soft);line-height:1.5;}
+  .announcement-card .ann-foot{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-top:10px;font-size:11.5px;color:var(--ink-faint);
+  }
+  .ann-delete{
+    background:none;border:none;color:var(--ink-faint);padding:4px;border-radius:50%;
+    display:inline-flex;transition:background .15s ease, color .15s ease;
+  }
+  .ann-delete:hover{background:var(--coral-tint);color:var(--coral);}
+  .ann-delete svg{width:14px;height:14px;}
+
+  .message-thread{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+  .message-bubble{
+    background:var(--shell);border:1px solid var(--line);border-radius:14px;
+    padding:10px 14px;max-width:520px;box-shadow:0 6px 16px rgba(20,21,43,0.04);
+  }
+  .message-bubble p{margin:0;font-size:13.5px;color:var(--ink);line-height:1.5;}
+  .message-bubble .msg-time{font-size:11px;color:var(--text-soft);margin-top:5px;display:block;}
+  .message-compose{display:flex;gap:10px;align-items:flex-end;}
+  .message-compose textarea{
+    flex:1;padding:10px 13px;border:1.5px solid var(--line-strong);border-radius:12px;
+    background:var(--canvas);outline:none;resize:vertical;min-height:44px;
+    font-family:inherit;font-size:14px;
+  }
+  .message-compose textarea:focus{border-color:var(--violet);background:#fff;}
 
   /* ---------- Facilitator / course simple lists ---------- */
   .simple-list{
@@ -685,21 +747,79 @@
   }
   .btn-ghost:hover{background:var(--canvas);border-color:var(--line-strong);}
 
+  /* ---------- Mobile topbar / drawer (hidden on desktop) ---------- */
+  .mobile-topbar{display:none;}
+  .drawer-toggle-btn{display:none;}
+  #drawer-backdrop{display:none;}
+
   @media (max-width: 860px){
     #app-screen{padding:0;}
-    #shell{border-radius:0;}
-    #app-screen.active{flex-direction:column;}
-    #shell{flex-direction:column;}
-    #sidebar{width:100%;flex-direction:row;align-items:center;padding:12px 14px;overflow-x:auto;}
-    #sidebar .mark{margin-bottom:0;margin-right:14px;}
-    #sidebar .spacer{display:none;}
-    .nav-rail{flex-direction:row;}
+    #app-screen.active{display:flex;flex-direction:column;}
+
+    /* fixed top bar with hamburger */
+    .mobile-topbar{
+      display:flex;align-items:center;gap:12px;
+      position:fixed;top:0;left:0;right:0;height:58px;
+      background:var(--shell);border-bottom:1px solid var(--line);
+      padding:0 14px;z-index:20;
+    }
+    .drawer-toggle-btn{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:38px;height:38px;border-radius:12px;flex-shrink:0;
+      background:var(--canvas);border:none;color:var(--ink);
+    }
+    .drawer-toggle-btn svg{width:20px;height:20px;}
+    .mobile-topbar-mark{display:flex;align-items:center;gap:9px;}
+    .mobile-topbar-mark .mark-sm{
+      width:30px;height:30px;border-radius:9px;background:var(--violet);
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    }
+    .mobile-topbar-mark .mark-sm svg{width:16px;height:16px;}
+    .mobile-topbar-mark span{font-family:var(--font-display);font-size:16px;font-weight:700;}
+
+    /* backdrop behind the drawer */
+    #drawer-backdrop{
+      display:block;position:fixed;inset:0;background:rgba(15,17,45,0.5);
+      z-index:40;opacity:0;visibility:hidden;transition:opacity .2s ease;
+    }
+    #drawer-backdrop.active{opacity:1;visibility:visible;}
+
+    #shell{flex-direction:column;border-radius:0;padding-top:58px;}
+
+    /* sidebar becomes an off-canvas drawer */
+    #sidebar{
+      position:fixed;top:0;left:0;height:100vh;width:240px;
+      flex-direction:column;align-items:stretch;padding:20px 0 16px;
+      transform:translateX(-100%);transition:transform .22s ease;
+      z-index:50;overflow-y:auto;
+    }
+    #sidebar.drawer-open{transform:translateX(0);}
+    #sidebar:hover{width:240px;}
+    #sidebar .mark{margin:0 0 24px 19px;}
+    #sidebar .spacer{display:block;}
+    .nav-rail{flex-direction:column;align-items:stretch;padding:0 14px;}
+    .nav-item{width:100%;justify-content:flex-start;padding-left:13px;height:48px;}
+    .nav-item .nav-label{opacity:1;max-width:none;margin-left:13px;}
+
     #main{padding:18px 16px 48px;}
     .topbar-greet .headline{font-size:21px;}
     .panel-grid{grid-template-columns:1fr;}
     .metric-row{flex-wrap:wrap;}
     .metric{min-width:calc(50% - 8px);}
     .bar-row{grid-template-columns:90px 1fr 26px;}
+
+    /* scrollable tables instead of crushed columns */
+    .table-card{overflow-x:auto;padding:6px 0;}
+    .table-card table.record-table{min-width:560px;}
+    .table-card th:first-child, .table-card td:first-child{padding-left:14px;}
+    .table-card th:last-child, .table-card td:last-child{padding-right:14px;}
+
+    /* prevent iOS auto-zoom on focus */
+    input, select, textarea{font-size:16px;}
+
+    .message-compose{flex-wrap:wrap;}
+    .message-compose textarea{min-width:100%;}
+    .message-compose #send-message-btn{width:100%;justify-content:center;}
   }
 </style>
 </head>
@@ -745,6 +865,16 @@
 
 <!-- ============ APP ============ -->
 <div id="app-screen">
+ <div class="mobile-topbar">
+   <button type="button" id="drawer-toggle" class="drawer-toggle-btn" aria-label="Open menu">
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+   </button>
+   <div class="mobile-topbar-mark">
+     <div class="mark-sm"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h9" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+     <span>Roster</span>
+   </div>
+ </div>
+ <div id="drawer-backdrop"></div>
  <div id="shell">
   <div id="sidebar">
     <div class="mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h9" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"/></svg></div>
@@ -752,6 +882,10 @@
     <div class="nav-item active" data-page="overview" title="Overview">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V10M10 19V5M16 19v-7M22 19H2"/></svg>
       <span class="nav-label">Overview</span>
+    </div>
+    <div class="nav-item" data-page="enquiries" title="Enquiries">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v13H8l-4 4V4Z"/><path d="M8 9h8M8 12.5h5"/></svg>
+      <span class="nav-label">Enquiries</span>
     </div>
     <div class="nav-item" data-page="learners" title="Learners">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 8.5a3 3 0 1 1 3.7 2.9M21 20c0-2.6-1.8-4.8-4.2-5.6"/></svg>
@@ -768,6 +902,10 @@
     <div class="nav-item" data-page="facilitators" title="Facilitators">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
       <span class="nav-label">Facilitators</span>
+    </div>
+    <div class="nav-item" data-page="communication" title="Communication">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 12 6 8Z"/><path d="M9.5 17a2.5 2.5 0 0 0 5 0"/></svg>
+      <span class="nav-label">Communication</span>
     </div>
     </div>
     <div class="spacer"></div>
@@ -815,6 +953,43 @@
           <div class="section-label">Recent activity</div>
           <div class="activity-list" id="overview-activity"></div>
         </div>
+      </div>
+    </section>
+
+    <!-- ENQUIRIES -->
+    <section class="page" id="page-enquiries">
+      <div class="page-head">
+        <h1>Enquiries</h1>
+        <button class="btn-add" id="open-enquiry-modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Add enquiry
+        </button>
+      </div>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="enquiry-search" placeholder="Search enquiries…">
+        </div>
+        <select id="filter-enquiry-course"><option value="">Any course interest</option></select>
+        <select id="filter-enquiry-status">
+          <option value="">All statuses</option>
+          <option value="new">New</option>
+          <option value="contacted">Contacted</option>
+          <option value="converted">Converted</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+      <div class="table-card">
+      <table class="record-table">
+        <thead>
+          <tr><th>Name</th><th>Course interest</th><th>Status</th></tr>
+        </thead>
+        <tbody id="enquiries-tbody"></tbody>
+      </table>
+      </div>
+      <div class="empty-state" id="enquiries-empty" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16v13H8l-4 4V4Z"/><path d="M8 9h8M8 12.5h5"/></svg>
+        No enquiries match this filter yet.
       </div>
     </section>
 
@@ -912,6 +1087,45 @@
       </div>
     </section>
 
+    <!-- COMMUNICATION -->
+    <section class="page" id="page-communication">
+      <div class="page-head"><h1>Communication</h1></div>
+      <div class="comm-tabs">
+        <button type="button" class="comm-tab active" data-comm-tab="announcements">Announcements</button>
+        <button type="button" class="comm-tab" data-comm-tab="messages">Messages</button>
+      </div>
+
+      <div class="comm-panel active" id="comm-panel-announcements">
+        <div class="toolbar">
+          <div class="fill-space"></div>
+          <button class="btn-add" id="open-announcement-modal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            New announcement
+          </button>
+        </div>
+        <div id="announcements-list"></div>
+        <div class="empty-state" id="announcements-empty" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 12 6 8Z"/><path d="M9.5 17a2.5 2.5 0 0 0 5 0"/></svg>
+          No announcements yet — post the first one.
+        </div>
+      </div>
+
+      <div class="comm-panel" id="comm-panel-messages">
+        <div class="toolbar">
+          <select id="message-learner-select"><option value="">Select a learner…</option></select>
+        </div>
+        <div class="message-thread" id="message-thread"></div>
+        <div class="message-compose" style="display:none;">
+          <textarea id="message-compose-text" rows="2" placeholder="Write a message…"></textarea>
+          <button class="btn-add" id="send-message-btn">Send</button>
+        </div>
+        <div class="empty-state" id="messages-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
+          Select a learner to see their messages.
+        </div>
+      </div>
+    </section>
+
   </div>
  </div>
 </div>
@@ -964,6 +1178,38 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="announcement-modal-overlay">
+  <div class="modal">
+    <h2>New announcement</h2>
+    <form id="announcement-form">
+      <div class="field"><label>Title</label><input type="text" id="announcement-title" required></div>
+      <div class="field"><label>Message</label><textarea id="announcement-body" rows="4" required></textarea></div>
+      <div class="field"><label>Audience</label><select id="announcement-course"><option value="">All learners</option></select></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close="announcement-modal-overlay">Cancel</button>
+        <button type="submit" class="btn-primary" style="width:auto;">Post announcement</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="enquiry-modal-overlay">
+  <div class="modal">
+    <h2>Add an enquiry</h2>
+    <form id="enquiry-form">
+      <div class="field"><label>Full name</label><input type="text" id="enquiry-name" required></div>
+      <div class="field"><label>Email</label><input type="email" id="enquiry-email"></div>
+      <div class="field"><label>Phone</label><input type="text" id="enquiry-phone" placeholder="+27 ..."></div>
+      <div class="field"><label>Course interested in</label><select id="enquiry-course"><option value="">Not sure yet</option></select></div>
+      <div class="field"><label>Note</label><textarea id="enquiry-note" rows="3" placeholder="How they got in touch, what they asked…"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close="enquiry-modal-overlay">Cancel</button>
+        <button type="submit" class="btn-primary" style="width:auto;">Add enquiry</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="modal-overlay" id="poe-modal-overlay">
   <div class="modal">
     <h2>Add an evidence requirement</h2>
@@ -985,7 +1231,7 @@ import {
   createUserWithEmailAndPassword, signOut, updateProfile
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import {
-  getDatabase, ref, onValue, push, set, update, serverTimestamp
+  getDatabase, ref, onValue, push, set, update, remove, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
 // Same backend project as the rest of the product suite — this dashboard
@@ -1013,6 +1259,9 @@ const db = getDatabase(app);
 // lmis_enrollments/{id}      -> { learnerId, courseId, status, progressPct, lastActivityAt }
 // lmis_poe_items/{id}        -> { courseId, label, createdAt }
 // lmis_poe_status/{enrollmentId}/{itemId} -> { status, updatedAt }
+// lmis_enquiries/{id}        -> { name, email, phone, courseId, note, status, createdAt, lastActivityAt }
+// lmis_announcements/{id}    -> { title, body, courseId, createdAt }
+// lmis_messages/{learnerId}/{messageId} -> { body, createdAt }
 
 let cachedFacilitators = {};
 let cachedCourses = {};
@@ -1020,12 +1269,19 @@ let cachedLearners = {};
 let cachedEnrollments = {};
 let cachedPoeItems = {};
 let cachedPoeStatus = {};
+let cachedEnquiries = {};
+let cachedAnnouncements = {};
+let cachedMessages = {};
 let expandedEnrollmentId = null;
 let expandedPoeEnrollmentId = null;
+let expandedEnquiryId = null;
 let poeCourseFilterInitialized = false;
 
-const dataLoaded = { facilitators:false, courses:false, learners:false, enrollments:false, poeItems:false, poeStatus:false };
-function allDataLoaded(){ return dataLoaded.facilitators && dataLoaded.courses && dataLoaded.learners && dataLoaded.enrollments && dataLoaded.poeItems && dataLoaded.poeStatus; }
+const dataLoaded = { facilitators:false, courses:false, learners:false, enrollments:false, poeItems:false, poeStatus:false, enquiries:false, announcements:false, messages:false };
+function allDataLoaded(){
+  return dataLoaded.facilitators && dataLoaded.courses && dataLoaded.learners && dataLoaded.enrollments &&
+    dataLoaded.poeItems && dataLoaded.poeStatus && dataLoaded.enquiries && dataLoaded.announcements && dataLoaded.messages;
+}
 function skel(width, height){ return `<span class="skeleton" style="display:inline-block;width:${width};height:${height};">&nbsp;</span>`; }
 
 // ---------------- AUTH / LOGIN ----------------
@@ -1121,13 +1377,31 @@ onAuthStateChanged(auth, (user) => {
 });
 renderLoginMode();
 
-// ---------------- NAV ----------------
+// ---------------- NAV / DRAWER ----------------
+const sidebarEl = document.getElementById('sidebar');
+const drawerBackdrop = document.getElementById('drawer-backdrop');
+const drawerToggleBtn = document.getElementById('drawer-toggle');
+
+function openDrawer(){
+  sidebarEl.classList.add('drawer-open');
+  drawerBackdrop.classList.add('active');
+}
+function closeDrawer(){
+  sidebarEl.classList.remove('drawer-open');
+  drawerBackdrop.classList.remove('active');
+}
+drawerToggleBtn.addEventListener('click', () => {
+  sidebarEl.classList.contains('drawer-open') ? closeDrawer() : openDrawer();
+});
+drawerBackdrop.addEventListener('click', closeDrawer);
+
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     item.classList.add('active');
     document.getElementById('page-' + item.dataset.page).classList.add('active');
+    closeDrawer();
   });
 });
 
@@ -1159,6 +1433,7 @@ function startDataListeners(){
   onValue(ref(db, 'lmis_learners'), (snap) => {
     cachedLearners = snap.val() || {};
     dataLoaded.learners = true;
+    renderMessageLearnerSelect();
     renderAllPages();
   });
 
@@ -1180,6 +1455,24 @@ function startDataListeners(){
     dataLoaded.poeStatus = true;
     renderAllPages();
   });
+
+  onValue(ref(db, 'lmis_enquiries'), (snap) => {
+    cachedEnquiries = snap.val() || {};
+    dataLoaded.enquiries = true;
+    renderAllPages();
+  });
+
+  onValue(ref(db, 'lmis_announcements'), (snap) => {
+    cachedAnnouncements = snap.val() || {};
+    dataLoaded.announcements = true;
+    renderAllPages();
+  });
+
+  onValue(ref(db, 'lmis_messages'), (snap) => {
+    cachedMessages = snap.val() || {};
+    dataLoaded.messages = true;
+    renderAllPages();
+  });
 }
 
 // Every listener calls this so that whichever data source finishes loading
@@ -1190,6 +1483,8 @@ function renderAllPages(){
   renderCoursesPage();
   renderFacilitatorsPage();
   renderPoePage();
+  renderEnquiriesPage();
+  renderCommunicationPage();
 }
 
 // ---------------- SKELETON LOADERS ----------------
@@ -1250,6 +1545,25 @@ function renderPoeSkeleton(){
       <td>${skel('120px','14px')}</td>
       <td>${skel('90px','20px')}</td>
     </tr>`).join('');
+}
+
+function renderEnquiriesSkeleton(){
+  document.getElementById('enquiries-empty').style.display = 'none';
+  document.getElementById('enquiries-tbody').innerHTML = [1,2,3].map(() => `
+    <tr>
+      <td>${skel('130px','14px')}<div style="margin-top:6px;">${skel('90px','11px')}</div></td>
+      <td>${skel('100px','14px')}</td>
+      <td>${skel('58px','20px')}</td>
+    </tr>`).join('');
+}
+
+function renderCommunicationSkeleton(){
+  document.getElementById('announcements-empty').style.display = 'none';
+  document.getElementById('announcements-list').innerHTML = [1,2].map(() => `
+    <div class="announcement-card">
+      <div class="ann-head">${skel('160px','15.5px')}${skel('70px','20px')}</div>
+      ${skel('90%','13.5px')}
+    </div>`).join('');
 }
 
 // ---------------- OVERVIEW ----------------
@@ -1334,6 +1648,12 @@ function renderCourseSelects(){
     .map(([id, c]) => `<option value="${id}">${escapeHtml(c.title || 'Untitled course')}</option>`).join('');
   filterCourse.innerHTML = '<option value="">All courses</option>' + opts;
   document.getElementById('enroll-course').innerHTML = opts || '<option value="">Add a course first</option>';
+  document.getElementById('enquiry-course').innerHTML = '<option value="">Not sure yet</option>' + opts;
+  const enquiryFilterEl = document.getElementById('filter-enquiry-course');
+  const prevEnquiryFilter = enquiryFilterEl.value;
+  enquiryFilterEl.innerHTML = '<option value="">Any course interest</option>' + opts;
+  if (prevEnquiryFilter && cachedCourses[prevEnquiryFilter]) enquiryFilterEl.value = prevEnquiryFilter;
+  document.getElementById('announcement-course').innerHTML = '<option value="">All learners</option>' + opts;
 }
 
 function renderFacilitatorSelects(){
@@ -1618,6 +1938,238 @@ document.getElementById('poe-filter-course').addEventListener('change', () => {
   renderPoePage();
 });
 
+// ---------------- ENQUIRIES PAGE ----------------
+const enquirySearch = document.getElementById('enquiry-search');
+const filterEnquiryCourse = document.getElementById('filter-enquiry-course');
+const filterEnquiryStatus = document.getElementById('filter-enquiry-status');
+[enquirySearch, filterEnquiryCourse, filterEnquiryStatus].forEach(el => el.addEventListener('input', renderEnquiriesPage));
+[filterEnquiryCourse, filterEnquiryStatus].forEach(el => el.addEventListener('change', renderEnquiriesPage));
+
+function enquiryStatusLabel(s){
+  return { new:'New', contacted:'Contacted', converted:'Converted', closed:'Closed' }[s] || 'New';
+}
+
+function renderEnquiriesPage(){
+  if (!allDataLoaded()) { renderEnquiriesSkeleton(); return; }
+  const tbody = document.getElementById('enquiries-tbody');
+  const emptyEl = document.getElementById('enquiries-empty');
+  const q = enquirySearch.value.trim().toLowerCase();
+  const cFilter = filterEnquiryCourse.value;
+  const sFilter = filterEnquiryStatus.value;
+
+  let rows = Object.entries(cachedEnquiries).map(([id, en]) => ({ id, ...en }));
+  if (cFilter) rows = rows.filter(en => en.courseId === cFilter);
+  if (sFilter) rows = rows.filter(en => (en.status || 'new') === sFilter);
+  if (q) rows = rows.filter(en => (en.name||'').toLowerCase().includes(q));
+  rows.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+
+  tbody.innerHTML = '';
+  if (rows.length === 0){
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  rows.forEach(en => {
+    const course = en.courseId ? cachedCourses[en.courseId] : null;
+    const status = en.status || 'new';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="cell-name">${escapeHtml(en.name)}</div><div class="cell-sub">${escapeHtml(en.email||en.phone||'')}</div></td>
+      <td>${course ? escapeHtml(course.title) : '<span class="cell-sub">Not sure yet</span>'}</td>
+      <td><span class="pill ${status}">${escapeHtml(enquiryStatusLabel(status))}</span></td>`;
+    tr.addEventListener('click', () => toggleEnquiryDetailRow(en.id, tr));
+    tbody.appendChild(tr);
+
+    if (expandedEnquiryId === en.id){
+      tbody.appendChild(buildEnquiryDetailRow(en));
+    }
+  });
+}
+
+function toggleEnquiryDetailRow(id, tr){
+  expandedEnquiryId = (expandedEnquiryId === id) ? null : id;
+  renderEnquiriesPage();
+}
+
+function buildEnquiryDetailRow(en){
+  const tr = document.createElement('tr');
+  tr.className = 'detail-row';
+  const td = document.createElement('td');
+  td.colSpan = 3;
+  const status = en.status || 'new';
+  const alreadyConverted = status === 'converted';
+
+  td.innerHTML = `
+    <div class="detail-panel">
+      <div class="detail-col">
+        <label>Status</label>
+        <select id="enquiry-status-${en.id}" ${alreadyConverted ? 'disabled' : ''}>
+          <option value="new" ${status==='new'?'selected':''}>New</option>
+          <option value="contacted" ${status==='contacted'?'selected':''}>Contacted</option>
+          <option value="converted" ${status==='converted'?'selected':''}>Converted</option>
+          <option value="closed" ${status==='closed'?'selected':''}>Closed</option>
+        </select>
+      </div>
+      ${en.note ? `<div class="detail-col"><label>Note</label><div class="cell-sub" style="max-width:280px;">${escapeHtml(en.note)}</div></div>` : ''}
+    </div>
+    <div class="detail-actions">
+      ${alreadyConverted ? '' : `<button class="btn-convert" id="enquiry-convert-${en.id}">Convert to learner</button>`}
+      <button class="detail-save" id="enquiry-save-${en.id}">Save changes</button>
+    </div>`;
+  tr.appendChild(td);
+
+  setTimeout(() => {
+    const saveBtn = document.getElementById(`enquiry-save-${en.id}`);
+    saveBtn.addEventListener('click', async () => {
+      const newStatus = document.getElementById(`enquiry-status-${en.id}`).value;
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span class="spinner"></span>Saving…';
+      await update(ref(db, `lmis_enquiries/${en.id}`), {
+        status: newStatus,
+        lastActivityAt: Date.now()
+      });
+      expandedEnquiryId = null;
+    });
+
+    const convertBtn = document.getElementById(`enquiry-convert-${en.id}`);
+    if (convertBtn){
+      convertBtn.addEventListener('click', async () => {
+        convertBtn.disabled = true;
+        convertBtn.innerHTML = '<span class="spinner"></span>Converting…';
+        const learnerRef = push(ref(db, 'lmis_learners'));
+        await set(learnerRef, {
+          name: en.name, email: en.email || '', phone: en.phone || '',
+          createdAt: serverTimestamp()
+        });
+        if (en.courseId){
+          const enrollRef = push(ref(db, 'lmis_enrollments'));
+          await set(enrollRef, {
+            learnerId: learnerRef.key,
+            courseId: en.courseId,
+            status: 'active',
+            progressPct: 0,
+            lastActivityAt: Date.now()
+          });
+        }
+        await update(ref(db, `lmis_enquiries/${en.id}`), {
+          status: 'converted',
+          lastActivityAt: Date.now()
+        });
+        expandedEnquiryId = null;
+      });
+    }
+  }, 0);
+
+  return tr;
+}
+
+// ---------------- COMMUNICATION PAGE ----------------
+document.querySelectorAll('.comm-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.comm-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.comm-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('comm-panel-' + tab.dataset.commTab).classList.add('active');
+  });
+});
+
+function renderCommunicationPage(){
+  if (!allDataLoaded()) { renderCommunicationSkeleton(); return; }
+  renderAnnouncementsList();
+  renderMessageThread();
+}
+
+function renderAnnouncementsList(){
+  const listEl = document.getElementById('announcements-list');
+  const emptyEl = document.getElementById('announcements-empty');
+  const entries = Object.entries(cachedAnnouncements).sort((a,b) => (b[1].createdAt||0) - (a[1].createdAt||0));
+  listEl.innerHTML = '';
+  if (entries.length === 0){ emptyEl.style.display = 'block'; return; }
+  emptyEl.style.display = 'none';
+
+  entries.forEach(([id, a]) => {
+    const course = a.courseId ? cachedCourses[a.courseId] : null;
+    const card = document.createElement('div');
+    card.className = 'announcement-card';
+    card.innerHTML = `
+      <div class="ann-head">
+        <h3>${escapeHtml(a.title)}</h3>
+        <span class="ann-meta">${course ? escapeHtml(course.title) : 'All learners'}</span>
+      </div>
+      <p>${escapeHtml(a.body)}</p>
+      <div class="ann-foot">
+        <span>${timeAgo(a.createdAt)}</span>
+        <button class="ann-delete" data-id="${id}" title="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>
+        </button>
+      </div>`;
+    listEl.appendChild(card);
+  });
+
+  listEl.querySelectorAll('.ann-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      await remove(ref(db, `lmis_announcements/${btn.dataset.id}`));
+    });
+  });
+}
+
+function renderMessageLearnerSelect(){
+  const sel = document.getElementById('message-learner-select');
+  const prev = sel.value;
+  const opts = Object.entries(cachedLearners).map(([id, l]) => `<option value="${id}">${escapeHtml(l.name)}</option>`).join('');
+  sel.innerHTML = '<option value="">Select a learner…</option>' + opts;
+  if (prev && cachedLearners[prev]) sel.value = prev;
+}
+
+document.getElementById('message-learner-select').addEventListener('change', renderMessageThread);
+
+function renderMessageThread(){
+  const threadEl = document.getElementById('message-thread');
+  const emptyEl = document.getElementById('messages-empty');
+  const composeEl = document.querySelector('.message-compose');
+  const learnerId = document.getElementById('message-learner-select').value;
+  threadEl.innerHTML = '';
+
+  if (!learnerId){
+    emptyEl.style.display = 'block';
+    composeEl.style.display = 'none';
+    return;
+  }
+  composeEl.style.display = 'flex';
+
+  const msgs = Object.entries(cachedMessages[learnerId] || {}).sort((a,b) => (a[1].createdAt||0) - (b[1].createdAt||0));
+  if (msgs.length === 0){
+    emptyEl.style.display = 'none';
+    threadEl.innerHTML = `<div class="empty-state" style="padding:24px 10px;">No messages with this learner yet — send the first one.</div>`;
+    return;
+  }
+  emptyEl.style.display = 'none';
+  msgs.forEach(([id, m]) => {
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+    bubble.innerHTML = `<p>${escapeHtml(m.body)}</p><span class="msg-time">${timeAgo(m.createdAt)}</span>`;
+    threadEl.appendChild(bubble);
+  });
+}
+
+document.getElementById('send-message-btn').addEventListener('click', async () => {
+  const learnerId = document.getElementById('message-learner-select').value;
+  const textEl = document.getElementById('message-compose-text');
+  const body = textEl.value.trim();
+  if (!learnerId || !body) return;
+  const btn = document.getElementById('send-message-btn');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Sending…';
+  const msgRef = push(ref(db, `lmis_messages/${learnerId}`));
+  await set(msgRef, { body, createdAt: Date.now() });
+  textEl.value = '';
+  btn.disabled = false;
+  btn.textContent = original;
+});
+
 // ---------------- MODALS ----------------
 function openModal(id){ document.getElementById(id).classList.add('active'); }
 function closeModal(id){ document.getElementById(id).classList.remove('active'); }
@@ -1632,6 +2184,8 @@ document.getElementById('open-enroll-modal').addEventListener('click', () => ope
 document.getElementById('open-course-modal').addEventListener('click', () => openModal('course-modal-overlay'));
 document.getElementById('open-facilitator-modal').addEventListener('click', () => openModal('facilitator-modal-overlay'));
 document.getElementById('open-poe-modal').addEventListener('click', () => openModal('poe-modal-overlay'));
+document.getElementById('open-enquiry-modal').addEventListener('click', () => openModal('enquiry-modal-overlay'));
+document.getElementById('open-announcement-modal').addEventListener('click', () => openModal('announcement-modal-overlay'));
 
 async function submitWithSpinner(form, busyLabel, fn){
   const btn = form.querySelector('button[type=submit]');
@@ -1718,6 +2272,45 @@ document.getElementById('poe-form').addEventListener('submit', async (e) => {
 
   e.target.reset();
   closeModal('poe-modal-overlay');
+});
+
+document.getElementById('enquiry-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = document.getElementById('enquiry-name').value.trim();
+  const email = document.getElementById('enquiry-email').value.trim();
+  const phone = document.getElementById('enquiry-phone').value.trim();
+  const courseId = document.getElementById('enquiry-course').value;
+  const note = document.getElementById('enquiry-note').value.trim();
+  if (!name) return;
+
+  await submitWithSpinner(e.target, 'Adding…', async () => {
+    const enquiryRef = push(ref(db, 'lmis_enquiries'));
+    await set(enquiryRef, {
+      name, email, phone, courseId, note,
+      status: 'new',
+      createdAt: serverTimestamp(),
+      lastActivityAt: Date.now()
+    });
+  });
+
+  e.target.reset();
+  closeModal('enquiry-modal-overlay');
+});
+
+document.getElementById('announcement-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const title = document.getElementById('announcement-title').value.trim();
+  const body = document.getElementById('announcement-body').value.trim();
+  const courseId = document.getElementById('announcement-course').value;
+  if (!title || !body) return;
+
+  await submitWithSpinner(e.target, 'Posting…', async () => {
+    const annRef = push(ref(db, 'lmis_announcements'));
+    await set(annRef, { title, body, courseId, createdAt: Date.now() });
+  });
+
+  e.target.reset();
+  closeModal('announcement-modal-overlay');
 });
 
 // ---------------- helpers ----------------
