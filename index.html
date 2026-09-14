@@ -158,7 +158,21 @@
   .btn-primary:active{transform:scale(.98);}.btn-primary:hover{background:var(--violet-deep);}.btn-primary:disabled{opacity:.55;cursor:default;}
   .login-toggle{text-align:center;margin-top:22px;font-size:13.5px;color:var(--text-soft);}.login-toggle button{background:none;border:none;color:var(--violet);font-weight:600;padding:0;font-size:inherit;}.login-toggle button:hover{text-decoration:underline;}.login-error{color:var(--coral);font-size:13.5px;margin-top:14px;min-height:0;}
   @media(max-width:900px){#login-screen{grid-template-columns:1fr}.login-visual{min-height:330px;padding:36px 28px 42px}.login-visual-mark{top:28px;left:28px}.login-visual h2{font-size:40px}.login-visual p{font-size:14px}.login-panel{min-height:auto;padding:52px 28px 60px}}
-  @media(max-width:520px){.login-visual{min-height:280px;padding:32px 22px}.login-visual-mark{top:22px;left:22px}.login-visual h2{font-size:32px}.login-panel{padding:42px 22px 50px}}
+  @media(max-width:640px){
+    #login-screen{grid-template-columns:1fr;min-height:100vh}
+    .login-visual{display:none}
+    .login-panel{min-height:100vh;padding:40px 24px;align-items:center;background:radial-gradient(circle at 50% 0%, rgba(108,92,231,.12), transparent 55%),var(--shell)}
+    .login-card{max-width:100%}
+    .login-mark{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:30px}
+    .login-mark .glyph{width:40px;height:40px;border-radius:12px;background:var(--violet);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(108,92,231,.32)}
+    .login-mark svg{width:21px;height:21px}
+    .login-mark span{font-family:var(--font-display);font-weight:750;font-size:21px}
+    .login-card h1{font-size:26px;text-align:center}
+    .login-card p.sub{text-align:center;margin-bottom:28px}
+    .field input{font-size:16px}
+    .btn-primary{padding:14px 16px;font-size:15.5px}
+    .login-toggle{margin-top:26px}
+  }
 
   /* ---------- App shell ---------- */
   #app-screen{display:none;min-height:100vh;align-items:stretch;justify-content:center;}
@@ -633,73 +647,6 @@
     background:var(--canvas);padding:5px 12px;border-radius:var(--pill);}
   .simple-list:empty{display:none;}
 
-  /* ---------- Course file upload ---------- */
-  .course-file-list{
-    display:flex;
-    flex-direction:column;
-    gap:7px;
-    margin-top:10px;
-  }
-  .course-file-item{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    padding:9px 11px;
-    border:1px solid var(--line);
-    border-radius:10px;
-    background:#fff;
-  }
-  .course-file-item .file-name{
-    min-width:0;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    font-size:12.5px;
-    color:var(--ink);
-  }
-  .course-file-item .file-size{
-    flex-shrink:0;
-    font-size:11px;
-    color:var(--text-soft);
-  }
-  .course-upload-status{
-    min-height:18px;
-    margin-top:8px;
-    font-size:12px;
-    color:var(--violet);
-  }
-  .course-files{
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    margin-top:10px;
-    width:100%;
-  }
-  .course-file-link{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    max-width:100%;
-    padding:7px 9px;
-    border-radius:9px;
-    background:#f8faff;
-    border:1px solid #eef0f4;
-    color:#4f46e5;
-    text-decoration:none;
-    font-size:12px;
-  }
-  .course-file-link:hover{background:#eef2ff;}
-  .course-file-link span{
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
-  .course-files-empty{
-    font-size:11.5px;
-    color:var(--ink-faint);
-  }
-
   /* ---------- Modal ---------- */
   .modal-overlay{
     display:none;position:fixed;inset:0;
@@ -738,6 +685,51 @@
     transition:border-color .15s ease, background .15s ease;
   }
   .btn-ghost:hover{background:var(--canvas);border-color:var(--line-strong);}
+
+  /* ---------- Course materials / uploads ---------- */
+  .materials-list{display:flex;flex-direction:column;gap:8px;margin-bottom:4px;max-height:280px;overflow-y:auto;}
+  .material-row{
+    display:flex;align-items:center;gap:11px;
+    padding:10px 12px;border:1px solid var(--line);border-radius:12px;
+    background:var(--canvas);
+  }
+  .material-row .file-icon{
+    width:34px;height:34px;border-radius:9px;flex-shrink:0;
+    background:var(--violet-tint);color:var(--violet);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .material-row .file-icon svg{width:16px;height:16px;}
+  .material-row .file-info{flex:1;min-width:0;}
+  .material-row .file-info strong{
+    display:block;font-size:13px;font-weight:600;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .material-row .file-info span{font-size:11.5px;color:var(--text-soft);}
+  .material-row .file-actions{display:flex;align-items:center;gap:2px;flex-shrink:0;}
+  .material-row a.file-download{
+    display:flex;align-items:center;justify-content:center;padding:6px;
+    border-radius:50%;color:var(--ink-faint);transition:background .15s ease,color .15s ease;
+  }
+  .material-row a.file-download:hover{background:var(--violet-tint);color:var(--violet);}
+  .material-row a.file-download svg{width:15px;height:15px;}
+  .material-row button.file-delete{
+    background:none;border:none;padding:6px;border-radius:50%;color:var(--ink-faint);
+    display:flex;align-items:center;justify-content:center;transition:background .15s ease,color .15s ease;
+  }
+  .material-row button.file-delete:hover{background:var(--coral-tint);color:var(--coral);}
+  .material-row button.file-delete svg{width:15px;height:15px;}
+  .material-row button.file-delete:disabled{opacity:.5;cursor:default;}
+
+  .upload-btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;margin-top:14px;
+  }
+  .upload-btn svg{width:15px;height:15px;}
+
+  .upload-progress{margin-top:14px;}
+  .upload-progress-track{width:100%;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .upload-progress-fill{width:0%;height:100%;border-radius:3px;background:var(--violet);transition:width .2s ease;}
+  #course-upload-progress-label{font-size:12px;color:var(--text-soft);display:block;margin-top:6px;}
 
   /* ---------- Mobile topbar / drawer (hidden on desktop) ---------- */
   .mobile-topbar{display:none;}
@@ -1266,23 +1258,36 @@
       <div class="field"><label>Facilitator</label><select id="course-facilitator" required></select></div>
       <div class="field"><label>Start date</label><input type="date" id="course-start"></div>
       <div class="field"><label>End date</label><input type="date" id="course-end"></div>
-
-      <div class="field">
-        <label for="course-files">Course files</label>
-        <input type="file" id="course-files" multiple
-          accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.zip,.jpg,.jpeg,.png,.webp">
-        <div id="course-file-help" class="cell-sub" style="margin-top:6px;">
-          Upload learning materials, notes, presentations or other course resources. Up to 10 files, 25 MB each.
-        </div>
-        <div id="course-file-list" class="course-file-list"></div>
-        <div id="course-upload-status" class="course-upload-status" aria-live="polite"></div>
-      </div>
-
       <div class="modal-actions">
         <button type="button" class="btn-ghost" data-close="course-modal-overlay">Cancel</button>
         <button type="submit" class="btn-primary" style="width:auto;">Add course</button>
       </div>
     </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="course-detail-modal-overlay">
+  <div class="modal" style="max-width:480px;">
+    <h2 id="course-detail-title">Course materials</h2>
+    <p class="sub" id="course-detail-sub" style="margin:-12px 0 16px;font-size:13px;color:var(--text-soft);"></p>
+
+    <div id="course-materials-list" class="materials-list"></div>
+    <p id="course-materials-empty" style="display:none;font-size:13px;color:var(--text-soft);margin:6px 0 0;">No documents uploaded yet.</p>
+
+    <div id="course-upload-progress" class="upload-progress" style="display:none;">
+      <div class="upload-progress-track"><div class="upload-progress-fill" id="course-upload-progress-fill"></div></div>
+      <span id="course-upload-progress-label">Uploading…</span>
+    </div>
+
+    <label class="btn-ghost upload-btn" for="course-material-input">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg>
+      Upload document
+    </label>
+    <input type="file" id="course-material-input" style="display:none;" multiple>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-close="course-detail-modal-overlay">Close</button>
+    </div>
   </div>
 </div>
 
@@ -1357,7 +1362,7 @@ import {
   getDatabase, ref, onValue, push, set, update, remove, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 import {
-  getStorage, storageRef, uploadBytes, getDownloadURL
+  getStorage, ref as sRef, uploadBytesResumable, getDownloadURL, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 // Same backend project as the rest of the product suite — this dashboard
@@ -1382,7 +1387,6 @@ const storage = getStorage(app);
 // lmis_admins/{uid}          -> { name, email }
 // lmis_facilitators/{id}     -> { name, email, phone, createdAt }
 // lmis_courses/{id}          -> { title, facilitatorId, startDate, endDate, createdAt }
-// lmis_course_files/{courseId}/{fileId} -> { name, contentType, size, url, storagePath, uploadedAt, uploadedBy }
 // lmis_learners/{id}         -> { name, email, phone, createdAt }
 // lmis_enrollments/{id}      -> { learnerId, courseId, status, progressPct, lastActivityAt }
 // lmis_poe_items/{id}        -> { courseId, label, createdAt }
@@ -1391,10 +1395,11 @@ const storage = getStorage(app);
 // lmis_applications/{id}     -> { name, email, phone, courseId, note, status, appliedAt, lastActivityAt }
 // lmis_announcements/{id}    -> { title, body, courseId, createdAt }
 // lmis_messages/{learnerId}/{messageId} -> { body, createdAt }
+// lmis_course_materials/{courseId}/{materialId} -> { name, url, path, size, contentType, uploadedAt }
+// Storage layout: course_materials/{courseId}/{materialId}_{filename}
 
 let cachedFacilitators = {};
 let cachedCourses = {};
-let cachedCourseFiles = {};
 let cachedLearners = {};
 let cachedEnrollments = {};
 let cachedPoeItems = {};
@@ -1408,9 +1413,9 @@ let expandedPoeEnrollmentId = null;
 let expandedEnquiryId = null;
 let poeCourseFilterInitialized = false;
 
-const dataLoaded = { facilitators:false, courses:false, courseFiles:false, learners:false, enrollments:false, poeItems:false, poeStatus:false, enquiries:false, applications:false, announcements:false, messages:false };
+const dataLoaded = { facilitators:false, courses:false, learners:false, enrollments:false, poeItems:false, poeStatus:false, enquiries:false, applications:false, announcements:false, messages:false };
 function allDataLoaded(){
-  return dataLoaded.facilitators && dataLoaded.courses && dataLoaded.courseFiles && dataLoaded.learners && dataLoaded.enrollments &&
+  return dataLoaded.facilitators && dataLoaded.courses && dataLoaded.learners && dataLoaded.enrollments &&
     dataLoaded.poeItems && dataLoaded.poeStatus && dataLoaded.enquiries && dataLoaded.applications && dataLoaded.announcements && dataLoaded.messages;
 }
 function skel(width, height){ return `<span class="skeleton" style="display:inline-block;width:${width};height:${height};">&nbsp;</span>`; }
@@ -1558,12 +1563,6 @@ function startDataListeners(){
     cachedCourses = snap.val() || {};
     dataLoaded.courses = true;
     renderCourseSelects();
-    renderAllPages();
-  });
-
-  onValue(ref(db, 'lmis_course_files'), (snap) => {
-    cachedCourseFiles = snap.val() || {};
-    dataLoaded.courseFiles = true;
     renderAllPages();
   });
 
@@ -1937,13 +1936,6 @@ function buildDetailRow(e){
 }
 
 // ---------------- COURSES PAGE ----------------
-function formatFileSize(bytes){
-  if (!bytes) return '0 B';
-  const units = ['B','KB','MB','GB'];
-  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
-}
-
 function renderCoursesPage(){
   if (!allDataLoaded()) { renderCoursesSkeleton(); return; }
   const listEl = document.getElementById('courses-list');
@@ -1956,27 +1948,14 @@ function renderCoursesPage(){
   entries.forEach(([id, c]) => {
     const facilitator = cachedFacilitators[c.facilitatorId] || { name: 'Unassigned' };
     const learnerCount = Object.values(cachedEnrollments).filter(e => e.courseId === id).length;
-    const files = Object.values(cachedCourseFiles[id] || {});
     const row = document.createElement('div');
     row.className = 'simple-row';
+    row.style.cursor = 'pointer';
+    row.dataset.id = id;
     row.innerHTML = `
-      <div class="main" style="align-items:flex-start;">
-        <div class="avatar-circle">${escapeHtml((c.title||'?').trim().charAt(0).toUpperCase())}</div>
-        <div class="main-text" style="min-width:0;">
-          <strong>${escapeHtml(c.title || 'Untitled course')}</strong>
-          <span>Facilitated by ${escapeHtml(facilitator.name)}</span>
-          <div class="course-files">
-            ${files.length
-              ? files.map(f => `<a class="course-file-link" href="${escapeHtml(f.url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(f.name)}">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0;"><path d="M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5"/></svg>
-                  <span>${escapeHtml(f.name)}</span>
-                  <small style="margin-left:auto;color:var(--text-soft);flex-shrink:0;">${formatFileSize(f.size)}</small>
-                </a>`).join('')
-              : '<div class="course-files-empty">No files uploaded</div>'}
-          </div>
-        </div>
-      </div>
-      <div class="meta">${learnerCount} learner${learnerCount===1?'':'s'}${c.startDate ? ' · from ' + escapeHtml(c.startDate) : ''} · ${files.length} file${files.length===1?'':'s'}</div>`;
+      <div class="main"><div class="avatar-circle">${escapeHtml((c.title||'?').trim().charAt(0).toUpperCase())}</div><div class="main-text"><strong>${escapeHtml(c.title)}</strong><span>Facilitated by ${escapeHtml(facilitator.name)}</span></div></div>
+      <div class="meta">${learnerCount} learner${learnerCount===1?'':'s'}${c.startDate ? ' · from ' + c.startDate : ''}</div>`;
+    row.addEventListener('click', () => openCourseDetail(id));
     listEl.appendChild(row);
   });
 }
@@ -2435,93 +2414,15 @@ document.getElementById('course-form').addEventListener('submit', async (e) => {
   const facilitatorId = document.getElementById('course-facilitator').value;
   const startDate = document.getElementById('course-start').value;
   const endDate = document.getElementById('course-end').value;
-  const fileInput = document.getElementById('course-files');
-  const statusEl = document.getElementById('course-upload-status');
-  const files = Array.from(fileInput.files || []);
-
   if (!title || !facilitatorId) return;
 
-  const maxFiles = 10;
-  const maxBytes = 25 * 1024 * 1024;
-  if (files.length > maxFiles){
-    statusEl.textContent = `Please select no more than ${maxFiles} files.`;
-    return;
-  }
-  const tooLarge = files.find(file => file.size > maxBytes);
-  if (tooLarge){
-    statusEl.textContent = `${tooLarge.name} is larger than 25 MB.`;
-    return;
-  }
-
-  const form = e.target;
-  const btn = form.querySelector('button[type=submit]');
-  const original = btn.innerHTML;
-  btn.disabled = true;
-  fileInput.disabled = true;
-
-  let courseKey = null;
-  try {
-    btn.innerHTML = '<span class="spinner"></span>Creating course…';
+  await submitWithSpinner(e.target, 'Adding…', async () => {
     const courseRef = push(ref(db, 'lmis_courses'));
-    courseKey = courseRef.key;
+    await set(courseRef, { title, facilitatorId, startDate, endDate, createdAt: serverTimestamp() });
+  });
 
-    await set(courseRef, {
-      title, facilitatorId, startDate, endDate,
-      createdAt: serverTimestamp()
-    });
-
-    if (files.length){
-      for (let i = 0; i < files.length; i++){
-        const file = files[i];
-        statusEl.textContent = `Uploading ${i + 1} of ${files.length}: ${file.name}`;
-        const fileRef = push(ref(db, `lmis_course_files/${courseKey}`));
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const storagePath = `lmis_courses/${courseKey}/${fileRef.key}_${safeName}`;
-        const objectRef = storageRef(storage, storagePath);
-
-        btn.innerHTML = `<span class="spinner"></span>Uploading ${i + 1}/${files.length}…`;
-        await uploadBytes(objectRef, file, {
-          contentType: file.type || 'application/octet-stream',
-          customMetadata: {
-            courseId: courseKey,
-            originalName: file.name
-          }
-        });
-        const url = await getDownloadURL(objectRef);
-
-        await set(fileRef, {
-          name: file.name,
-          contentType: file.type || 'application/octet-stream',
-          size: file.size,
-          url,
-          storagePath,
-          uploadedAt: Date.now(),
-          uploadedBy: auth.currentUser ? auth.currentUser.uid : ''
-        });
-      }
-    }
-
-    statusEl.textContent = files.length
-      ? `${files.length} file${files.length === 1 ? '' : 's'} uploaded successfully.`
-      : 'Course created successfully.';
-
-    form.reset();
-    closeModal('course-modal-overlay');
-  } catch (error) {
-    console.error('Course creation/upload failed:', error);
-    statusEl.textContent = error?.message || 'Could not create the course or upload its files.';
-
-    // Avoid leaving a course record behind when file upload fails.
-    if (courseKey){
-      try { await remove(ref(db, `lmis_courses/${courseKey}`)); } catch (cleanupError) {
-        console.error('Course cleanup failed:', cleanupError);
-      }
-    }
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = original;
-    fileInput.disabled = false;
-  }
+  e.target.reset();
+  closeModal('course-modal-overlay');
 });
 
 document.getElementById('facilitator-form').addEventListener('submit', async (e) => {
@@ -2592,6 +2493,137 @@ document.getElementById('announcement-form').addEventListener('submit', async (e
 
   e.target.reset();
   closeModal('announcement-modal-overlay');
+});
+
+// ---------------- COURSE MATERIALS (Firebase Storage) ----------------
+let currentCourseDetailId = null;
+let courseMaterialsUnsub = null;
+let cachedCourseMaterials = {};
+
+function openCourseDetail(courseId){
+  currentCourseDetailId = courseId;
+  const course = cachedCourses[courseId] || {};
+  document.getElementById('course-detail-title').textContent = course.title || 'Course materials';
+  document.getElementById('course-detail-sub').textContent = 'Documents facilitators and learners can reference for this course.';
+  document.getElementById('course-materials-list').innerHTML = '';
+  document.getElementById('course-upload-progress').style.display = 'none';
+  openModal('course-detail-modal-overlay');
+
+  if (courseMaterialsUnsub) courseMaterialsUnsub();
+  courseMaterialsUnsub = onValue(ref(db, `lmis_course_materials/${courseId}`), (snap) => {
+    cachedCourseMaterials = snap.val() || {};
+    renderCourseMaterials();
+  });
+}
+
+function closeCourseDetail(){
+  closeModal('course-detail-modal-overlay');
+  if (courseMaterialsUnsub) { courseMaterialsUnsub(); courseMaterialsUnsub = null; }
+  currentCourseDetailId = null;
+  cachedCourseMaterials = {};
+}
+document.getElementById('course-detail-modal-overlay')
+  .querySelector('[data-close="course-detail-modal-overlay"]')
+  .addEventListener('click', closeCourseDetail);
+document.getElementById('course-detail-modal-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'course-detail-modal-overlay') closeCourseDetail();
+});
+
+function formatFileSize(bytes){
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function renderCourseMaterials(){
+  const listEl = document.getElementById('course-materials-list');
+  const emptyEl = document.getElementById('course-materials-empty');
+  const entries = Object.entries(cachedCourseMaterials);
+  listEl.innerHTML = '';
+  if (entries.length === 0){ emptyEl.style.display = 'block'; return; }
+  emptyEl.style.display = 'none';
+
+  entries.sort((a, b) => (b[1].uploadedAt || 0) - (a[1].uploadedAt || 0));
+
+  entries.forEach(([id, m]) => {
+    const row = document.createElement('div');
+    row.className = 'material-row';
+    row.innerHTML = `
+      <div class="file-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+      <div class="file-info"><strong>${escapeHtml(m.name || 'Document')}</strong><span>${formatFileSize(m.size)}${m.size ? ' · ' : ''}${timeAgo(m.uploadedAt)}</span></div>
+      <div class="file-actions">
+        <a class="file-download" href="${m.url}" target="_blank" rel="noopener" title="Open">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v13M6 12l6 6 6-6"/></svg>
+        </a>
+        <button class="file-delete" data-id="${id}" data-path="${m.path || ''}" title="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>
+        </button>
+      </div>`;
+    listEl.appendChild(row);
+  });
+
+  listEl.querySelectorAll('.file-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      const materialId = btn.dataset.id;
+      const path = btn.dataset.path;
+      try {
+        if (path) await deleteObject(sRef(storage, path));
+      } catch (err) {
+        console.error('Storage delete failed', err);
+      }
+      await remove(ref(db, `lmis_course_materials/${currentCourseDetailId}/${materialId}`));
+    });
+  });
+}
+
+document.getElementById('course-material-input').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files || []);
+  if (!files.length || !currentCourseDetailId) return;
+
+  const progressWrap = document.getElementById('course-upload-progress');
+  const progressFill = document.getElementById('course-upload-progress-fill');
+  const progressLabel = document.getElementById('course-upload-progress-label');
+  progressWrap.style.display = 'block';
+
+  for (let i = 0; i < files.length; i++){
+    const file = files[i];
+    const materialRef = push(ref(db, `lmis_course_materials/${currentCourseDetailId}`));
+    const materialId = materialRef.key;
+    const path = `course_materials/${currentCourseDetailId}/${materialId}_${file.name}`;
+    const fileRef = sRef(storage, path);
+    const task = uploadBytesResumable(fileRef, file);
+
+    await new Promise((resolve, reject) => {
+      task.on('state_changed',
+        (snap) => {
+          const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+          progressFill.style.width = pct + '%';
+          progressLabel.textContent = `Uploading ${i + 1} of ${files.length} — ${file.name} (${pct}%)`;
+        },
+        (err) => { console.error('Upload failed', err); reject(err); },
+        async () => {
+          try {
+            const url = await getDownloadURL(fileRef);
+            await set(materialRef, {
+              name: file.name,
+              url,
+              path,
+              size: file.size,
+              contentType: file.type || '',
+              uploadedAt: Date.now()
+            });
+            resolve();
+          } catch (err) { reject(err); }
+        }
+      );
+    }).catch(() => {});
+  }
+
+  progressWrap.style.display = 'none';
+  progressFill.style.width = '0%';
+  e.target.value = '';
 });
 
 // ---------------- helpers ----------------
