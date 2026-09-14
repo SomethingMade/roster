@@ -563,6 +563,10 @@
   .pill.completed{background:var(--violet-tint);color:var(--violet);}
   .pill.at-risk{background:var(--coral-tint);color:var(--coral);}
   .pill.withdrawn{background:var(--canvas-line);color:var(--text-soft);}
+  .pill.not-submitted{background:var(--canvas-line);color:var(--text-soft);}
+  .pill.submitted{background:var(--amber-tint);color:var(--amber);}
+  .pill.approved{background:var(--teal-tint);color:var(--teal);}
+  .pill.rejected{background:var(--coral-tint);color:var(--coral);}
   .empty-state{
     padding:46px 10px;text-align:center;color:var(--text-soft);
     font-size:14px;
@@ -598,6 +602,22 @@
     transition:background .15s ease;
   }
   .detail-save:hover{background:var(--violet-deep);}
+
+  /* ---------- POE checklist ---------- */
+  .poe-checklist{display:flex;flex-direction:column;width:100%;}
+  .poe-check-row{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:10px 0;border-bottom:1px solid var(--line-strong);flex-wrap:wrap;
+  }
+  .poe-check-row:last-child{border-bottom:none;}
+  .poe-check-row .item-label{font-size:13.5px;color:var(--ink);font-weight:500;}
+  .poe-check-row .item-controls{display:flex;align-items:center;gap:10px;}
+  .poe-check-row select{
+    padding:7px 10px;border:1px solid var(--line-strong);border-radius:8px;
+    background:#fff;font-size:12.5px;outline:none;
+  }
+  .poe-check-row select:focus{border-color:var(--violet);}
+  .poe-save-row{display:flex;justify-content:flex-end;margin-top:12px;}
 
   /* ---------- Facilitator / course simple lists ---------- */
   .simple-list{
@@ -741,6 +761,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H16v16H5.5A1.5 1.5 0 0 1 4 18.5v-13Z"/><path d="M16 4h2.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H16"/></svg>
       <span class="nav-label">Courses</span>
     </div>
+    <div class="nav-item" data-page="poe" title="POE">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4.5h6a1 1 0 0 1 1 1V6h1.5A1.5 1.5 0 0 1 19 7.5v12A1.5 1.5 0 0 1 17.5 21h-11A1.5 1.5 0 0 1 5 19.5v-12A1.5 1.5 0 0 1 6.5 6H8v-.5a1 1 0 0 1 1-1Z"/><path d="M9 12.5l2 2 4-4"/></svg>
+      <span class="nav-label">POE</span>
+    </div>
     <div class="nav-item" data-page="facilitators" title="Facilitators">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
       <span class="nav-label">Facilitators</span>
@@ -846,6 +870,32 @@
       </div>
     </section>
 
+    <!-- POE -->
+    <section class="page" id="page-poe">
+      <div class="page-head">
+        <h1>Portfolio of Evidence</h1>
+        <button class="btn-add" id="open-poe-modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Add requirement
+        </button>
+      </div>
+      <div class="toolbar">
+        <select id="poe-filter-course"></select>
+      </div>
+      <div class="table-card">
+      <table class="record-table">
+        <thead>
+          <tr><th>Learner</th><th>Evidence</th></tr>
+        </thead>
+        <tbody id="poe-tbody"></tbody>
+      </table>
+      </div>
+      <div class="empty-state" id="poe-empty" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 4.5h6a1 1 0 0 1 1 1V6h1.5A1.5 1.5 0 0 1 19 7.5v12A1.5 1.5 0 0 1 17.5 21h-11A1.5 1.5 0 0 1 5 19.5v-12A1.5 1.5 0 0 1 6.5 6H8v-.5a1 1 0 0 1 1-1Z"/><path d="M9 12.5l2 2 4-4"/></svg>
+        <span id="poe-empty-text">Add a course and enroll a learner first.</span>
+      </div>
+    </section>
+
     <!-- FACILITATORS -->
     <section class="page" id="page-facilitators">
       <div class="page-head">
@@ -914,6 +964,20 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="poe-modal-overlay">
+  <div class="modal">
+    <h2>Add an evidence requirement</h2>
+    <form id="poe-form">
+      <div class="field"><label>Course</label><select id="poe-req-course" required></select></div>
+      <div class="field"><label>Evidence item</label><input type="text" id="poe-req-label" placeholder="e.g. ID document, Logbook, Assessment 1" required></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close="poe-modal-overlay">Cancel</button>
+        <button type="submit" class="btn-primary" style="width:auto;">Add requirement</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import {
@@ -947,15 +1011,21 @@ const db = getDatabase(app);
 // lmis_courses/{id}          -> { title, facilitatorId, startDate, endDate, createdAt }
 // lmis_learners/{id}         -> { name, email, phone, createdAt }
 // lmis_enrollments/{id}      -> { learnerId, courseId, status, progressPct, lastActivityAt }
+// lmis_poe_items/{id}        -> { courseId, label, createdAt }
+// lmis_poe_status/{enrollmentId}/{itemId} -> { status, updatedAt }
 
 let cachedFacilitators = {};
 let cachedCourses = {};
 let cachedLearners = {};
 let cachedEnrollments = {};
+let cachedPoeItems = {};
+let cachedPoeStatus = {};
 let expandedEnrollmentId = null;
+let expandedPoeEnrollmentId = null;
+let poeCourseFilterInitialized = false;
 
-const dataLoaded = { facilitators:false, courses:false, learners:false, enrollments:false };
-function allDataLoaded(){ return dataLoaded.facilitators && dataLoaded.courses && dataLoaded.learners && dataLoaded.enrollments; }
+const dataLoaded = { facilitators:false, courses:false, learners:false, enrollments:false, poeItems:false, poeStatus:false };
+function allDataLoaded(){ return dataLoaded.facilitators && dataLoaded.courses && dataLoaded.learners && dataLoaded.enrollments && dataLoaded.poeItems && dataLoaded.poeStatus; }
 function skel(width, height){ return `<span class="skeleton" style="display:inline-block;width:${width};height:${height};">&nbsp;</span>`; }
 
 // ---------------- AUTH / LOGIN ----------------
@@ -1097,6 +1167,19 @@ function startDataListeners(){
     dataLoaded.enrollments = true;
     renderAllPages();
   });
+
+  onValue(ref(db, 'lmis_poe_items'), (snap) => {
+    cachedPoeItems = snap.val() || {};
+    dataLoaded.poeItems = true;
+    renderPoeCourseSelects();
+    renderAllPages();
+  });
+
+  onValue(ref(db, 'lmis_poe_status'), (snap) => {
+    cachedPoeStatus = snap.val() || {};
+    dataLoaded.poeStatus = true;
+    renderAllPages();
+  });
 }
 
 // Every listener calls this so that whichever data source finishes loading
@@ -1106,6 +1189,7 @@ function renderAllPages(){
   renderLearnersPage();
   renderCoursesPage();
   renderFacilitatorsPage();
+  renderPoePage();
 }
 
 // ---------------- SKELETON LOADERS ----------------
@@ -1157,6 +1241,15 @@ function renderFacilitatorsSkeleton(){
       <div class="main">${skel('38px','38px')}<div class="main-text">${skel('150px','15px')}<div style="margin-top:6px;">${skel('130px','12px')}</div></div></div>
       <div class="meta">${skel('70px','13px')}</div>
     </div>`).join('');
+}
+
+function renderPoeSkeleton(){
+  document.getElementById('poe-empty').style.display = 'none';
+  document.getElementById('poe-tbody').innerHTML = [1,2,3].map(() => `
+    <tr>
+      <td>${skel('120px','14px')}</td>
+      <td>${skel('90px','20px')}</td>
+    </tr>`).join('');
 }
 
 // ---------------- OVERVIEW ----------------
@@ -1392,6 +1485,139 @@ function renderFacilitatorsPage(){
   });
 }
 
+// ---------------- POE PAGE ----------------
+function renderPoeCourseSelects(){
+  const opts = Object.entries(cachedCourses)
+    .map(([id, c]) => `<option value="${id}">${escapeHtml(c.title || 'Untitled course')}</option>`).join('');
+  document.getElementById('poe-req-course').innerHTML = opts || '<option value="">Add a course first</option>';
+
+  const filterEl = document.getElementById('poe-filter-course');
+  const prevValue = filterEl.value;
+  filterEl.innerHTML = opts || '<option value="">Add a course first</option>';
+  if (prevValue && cachedCourses[prevValue]) filterEl.value = prevValue;
+  poeCourseFilterInitialized = true;
+}
+
+function poeItemsForCourse(courseId){
+  return Object.entries(cachedPoeItems).filter(([, item]) => item.courseId === courseId);
+}
+
+function poeStatusLabel(s){
+  return { 'not-submitted':'Not submitted', submitted:'Submitted', approved:'Approved', rejected:'Rejected' }[s] || 'Not submitted';
+}
+
+function renderPoePage(){
+  if (!allDataLoaded()) { renderPoeSkeleton(); return; }
+  const tbody = document.getElementById('poe-tbody');
+  const emptyEl = document.getElementById('poe-empty');
+  const emptyText = document.getElementById('poe-empty-text');
+  const courseId = document.getElementById('poe-filter-course').value;
+
+  tbody.innerHTML = '';
+
+  if (Object.keys(cachedCourses).length === 0){
+    emptyEl.style.display = 'block';
+    emptyText.textContent = 'Add a course first.';
+    return;
+  }
+  if (!courseId){
+    emptyEl.style.display = 'block';
+    emptyText.textContent = 'Pick a course to see its evidence checklist.';
+    return;
+  }
+
+  const items = poeItemsForCourse(courseId);
+  const enrollments = Object.entries(cachedEnrollments).filter(([, e]) => e.courseId === courseId);
+
+  if (items.length === 0){
+    emptyEl.style.display = 'block';
+    emptyText.textContent = 'No evidence requirements for this course yet — add one.';
+    return;
+  }
+  if (enrollments.length === 0){
+    emptyEl.style.display = 'block';
+    emptyText.textContent = 'No learners enrolled in this course yet.';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  enrollments.forEach(([enrollmentId, enr]) => {
+    const learner = cachedLearners[enr.learnerId] || { name: 'Unknown learner' };
+    const statusMap = cachedPoeStatus[enrollmentId] || {};
+    const approvedCount = items.filter(([itemId]) => (statusMap[itemId] || {}).status === 'approved').length;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="cell-name">${escapeHtml(learner.name)}</div></td>
+      <td><span class="pill poe-progress-pill ${approvedCount === items.length ? 'approved' : 'submitted'}">${approvedCount}/${items.length} approved</span></td>`;
+    tr.addEventListener('click', () => togglePoeDetailRow(enrollmentId, tr));
+    tbody.appendChild(tr);
+
+    if (expandedPoeEnrollmentId === enrollmentId){
+      tbody.appendChild(buildPoeDetailRow(enrollmentId, items, statusMap));
+    }
+  });
+}
+
+function togglePoeDetailRow(enrollmentId, tr){
+  expandedPoeEnrollmentId = (expandedPoeEnrollmentId === enrollmentId) ? null : enrollmentId;
+  renderPoePage();
+}
+
+function buildPoeDetailRow(enrollmentId, items, statusMap){
+  const tr = document.createElement('tr');
+  tr.className = 'detail-row';
+  const td = document.createElement('td');
+  td.colSpan = 2;
+
+  const rows = items.map(([itemId, item]) => {
+    const current = (statusMap[itemId] || {}).status || 'not-submitted';
+    return `
+      <div class="poe-check-row" data-item-id="${itemId}">
+        <div class="item-label">${escapeHtml(item.label || 'Evidence item')}</div>
+        <div class="item-controls">
+          <select data-item-id="${itemId}">
+            <option value="not-submitted" ${current==='not-submitted'?'selected':''}>Not submitted</option>
+            <option value="submitted" ${current==='submitted'?'selected':''}>Submitted</option>
+            <option value="approved" ${current==='approved'?'selected':''}>Approved</option>
+            <option value="rejected" ${current==='rejected'?'selected':''}>Rejected</option>
+          </select>
+        </div>
+      </div>`;
+  }).join('');
+
+  td.innerHTML = `
+    <div class="detail-panel">
+      <div class="poe-checklist">${rows}</div>
+    </div>
+    <div class="poe-save-row"><button class="detail-save" id="poe-save-${enrollmentId}">Save changes</button></div>`;
+  tr.appendChild(td);
+
+  setTimeout(() => {
+    const saveBtn = document.getElementById(`poe-save-${enrollmentId}`);
+    saveBtn.addEventListener('click', async () => {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span class="spinner"></span>Saving…';
+      const selects = td.querySelectorAll('select[data-item-id]');
+      const updates = {};
+      selects.forEach(sel => {
+        updates[`lmis_poe_status/${enrollmentId}/${sel.dataset.itemId}`] = {
+          status: sel.value,
+          updatedAt: Date.now()
+        };
+      });
+      await update(ref(db), updates);
+    });
+  }, 0);
+
+  return tr;
+}
+
+document.getElementById('poe-filter-course').addEventListener('change', () => {
+  expandedPoeEnrollmentId = null;
+  renderPoePage();
+});
+
 // ---------------- MODALS ----------------
 function openModal(id){ document.getElementById(id).classList.add('active'); }
 function closeModal(id){ document.getElementById(id).classList.remove('active'); }
@@ -1405,6 +1631,7 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 document.getElementById('open-enroll-modal').addEventListener('click', () => openModal('enroll-modal-overlay'));
 document.getElementById('open-course-modal').addEventListener('click', () => openModal('course-modal-overlay'));
 document.getElementById('open-facilitator-modal').addEventListener('click', () => openModal('facilitator-modal-overlay'));
+document.getElementById('open-poe-modal').addEventListener('click', () => openModal('poe-modal-overlay'));
 
 async function submitWithSpinner(form, busyLabel, fn){
   const btn = form.querySelector('button[type=submit]');
@@ -1476,6 +1703,21 @@ document.getElementById('facilitator-form').addEventListener('submit', async (e)
 
   e.target.reset();
   closeModal('facilitator-modal-overlay');
+});
+
+document.getElementById('poe-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const courseId = document.getElementById('poe-req-course').value;
+  const label = document.getElementById('poe-req-label').value.trim();
+  if (!courseId || !label) return;
+
+  await submitWithSpinner(e.target, 'Adding…', async () => {
+    const itemRef = push(ref(db, 'lmis_poe_items'));
+    await set(itemRef, { courseId, label, createdAt: serverTimestamp() });
+  });
+
+  e.target.reset();
+  closeModal('poe-modal-overlay');
 });
 
 // ---------------- helpers ----------------
