@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#6C5CE7">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%236C5CE7'/%3E%3Cpath d='M25 30h50M25 50h50M25 70h34' stroke='%23FFFFFF' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Google+Sans+Code:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --page-1:#141832;
@@ -32,9 +32,9 @@
     --amber-tint:#FFF3E2;
     --text:#14152B;
     --text-soft:#6E7191;
-    --font-display:'Plus Jakarta Sans', sans-serif;
-    --font-body:'Inter', sans-serif;
-    --font-mono:'IBM Plex Mono', monospace;
+    --font-display:'Google Sans', sans-serif;
+    --font-body:'Google Sans', sans-serif;
+    --font-mono:'Google Sans Code', monospace;
     --radius:14px;
     --pill:999px;
     --shell-radius:28px;
@@ -236,16 +236,13 @@
   }
 
   /* ---------- App shell ---------- */
-  #app-screen{display:none;min-height:100vh;align-items:stretch;justify-content:center;padding:26px;}
+  #app-screen{display:none;min-height:100vh;align-items:stretch;justify-content:center;}
   #app-screen.active{display:flex;}
 
   #shell{
     display:flex;
     width:100%;
-    max-width:1440px;
     background:var(--shell);
-    border-radius:var(--shell-radius);
-    box-shadow:0 40px 90px rgba(10,12,40,0.45);
     overflow:hidden;
   }
 
