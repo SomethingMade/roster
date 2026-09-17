@@ -549,6 +549,16 @@
   .iv-delete:hover{background:var(--coral-tint);color:var(--coral);}
   .iv-learner-link{color:var(--ink);cursor:pointer;text-decoration:none;}
   .iv-learner-link:hover{color:var(--violet);text-decoration:underline;}
+  .table-select{
+    padding:6px 10px;border:1px solid var(--line-strong);
+    border-radius:8px;background:var(--shell);outline:none;
+    color:var(--text);font-size:13px;font-family:inherit;
+    transition:border-color .15s ease;
+  }
+  .table-select:focus{border-color:var(--violet);}
+  .verifier-delete{background:none;border:none;color:var(--ink-faint);padding:6px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;transition:background .15s ease, color .15s ease;}
+  .verifier-delete:hover{background:var(--coral-tint);color:var(--coral);}
+  .verifier-delete svg{width:14px;height:14px;}
   .empty-state{
     padding:46px 10px;text-align:center;color:var(--text-soft);
     font-size:14px;
@@ -953,6 +963,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
       <span class="nav-label">Facilitators</span>
     </div>
+    <div class="nav-item" data-page="verifier-assignments" title="Verifier Assignments">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12.5l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+      <span class="nav-label">Verifier Assignments</span>
+    </div>
     <div class="nav-item" data-page="communication" title="Communication">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 12 6 8Z"/><path d="M9.5 17a2.5 2.5 0 0 0 5 0"/></svg>
       <span class="nav-label">Communication</span>
@@ -1153,6 +1167,37 @@
       </div>
     </section>
 
+    <!-- VERIFIER ASSIGNMENTS -->
+    <section class="page" id="page-verifier-assignments">
+      <div class="page-head">
+        <h1>Verifier Assignments</h1>
+        <button class="btn-add" id="open-verifier-modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Add verifier
+        </button>
+      </div>
+      <p class="sub" style="margin:-8px 0 16px;font-size:13px;color:var(--text-soft);">Verifiers moderate assessment evidence and sign off POE for a course.</p>
+
+      <div class="simple-list" id="verifiers-list"></div>
+      <div class="empty-state" id="verifiers-empty" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 12.5l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+        No verifiers yet — add the first one.
+      </div>
+
+      <div class="table-card" style="margin-top:20px;">
+      <table class="record-table">
+        <thead>
+          <tr><th>Course</th><th>Facilitator</th><th>Verifier</th></tr>
+        </thead>
+        <tbody id="verifier-assignments-tbody"></tbody>
+      </table>
+      </div>
+      <div class="empty-state" id="verifier-assignments-empty" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H16v16H5.5A1.5 1.5 0 0 1 4 18.5v-13Z"/><path d="M16 4h2.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H16"/></svg>
+        Add a course first to assign a verifier.
+      </div>
+    </section>
+
     <!-- INTERVENTIONS -->
     <section class="page" id="page-interventions">
       <div class="page-head">
@@ -1301,6 +1346,21 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="verifier-modal-overlay">
+  <div class="modal">
+    <h2>Add a verifier</h2>
+    <form id="verifier-form">
+      <div class="field"><label>Full name</label><input type="text" id="verifier-name" required></div>
+      <div class="field"><label>Email</label><input type="email" id="verifier-email"></div>
+      <div class="field"><label>Phone</label><input type="text" id="verifier-phone" placeholder="+27 ..."></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close="verifier-modal-overlay">Cancel</button>
+        <button type="submit" class="btn-primary" style="width:auto;">Add verifier</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="modal-overlay" id="intervention-modal-overlay">
   <div class="modal">
     <h2 id="intervention-modal-title">Log an intervention</h2>
@@ -1415,8 +1475,12 @@ const storage = getStorage(app);
 // lmis_messages/{learnerId}/{messageId} -> { body, createdAt }
 // lmis_course_materials/{courseId}/{materialId} -> { name, url, path, size, contentType, uploadedAt }
 // lmis_interventions/{id}    -> { learnerId, type, note, status, createdAt }
+// lmis_verifiers/{id}        -> { name, email, phone, createdAt }
+// lmis_verifier_assignments/{courseId} -> { verifierId, assignedAt }
 // Storage layout: course_materials/{courseId}/{materialId}_{filename}
 
+let cachedVerifiers = {};
+let cachedVerifierAssignments = {};
 let cachedInterventions = {};
 let cachedFacilitators = {};
 let cachedCourses = {};
@@ -1433,10 +1497,11 @@ let expandedPoeEnrollmentId = null;
 let expandedEnquiryId = null;
 let poeCourseFilterInitialized = false;
 
-const dataLoaded = { facilitators:false, courses:false, learners:false, enrollments:false, poeItems:false, poeStatus:false, enquiries:false, applications:false, announcements:false, messages:false, interventions:false };
+const dataLoaded = { facilitators:false, courses:false, learners:false, enrollments:false, poeItems:false, poeStatus:false, enquiries:false, applications:false, announcements:false, messages:false, interventions:false, verifiers:false, verifierAssignments:false };
 function allDataLoaded(){
   return dataLoaded.facilitators && dataLoaded.courses && dataLoaded.learners && dataLoaded.enrollments &&
-    dataLoaded.poeItems && dataLoaded.poeStatus && dataLoaded.enquiries && dataLoaded.applications && dataLoaded.announcements && dataLoaded.messages && dataLoaded.interventions;
+    dataLoaded.poeItems && dataLoaded.poeStatus && dataLoaded.enquiries && dataLoaded.applications && dataLoaded.announcements && dataLoaded.messages && dataLoaded.interventions &&
+    dataLoaded.verifiers && dataLoaded.verifierAssignments;
 }
 function skel(width, height){ return `<span class="skeleton" style="display:inline-block;width:${width};height:${height};">&nbsp;</span>`; }
 
@@ -1592,6 +1657,7 @@ function startDataListeners(){
   renderCoursesSkeleton();
   renderFacilitatorsSkeleton();
   renderInterventionsSkeleton();
+  renderVerifierAssignmentsSkeleton();
 
   onValue(ref(db, 'lmis_facilitators'), (snap) => {
     cachedFacilitators = snap.val() || {};
@@ -1663,6 +1729,18 @@ function startDataListeners(){
     dataLoaded.interventions = true;
     renderAllPages();
   });
+
+  onValue(ref(db, 'lmis_verifiers'), (snap) => {
+    cachedVerifiers = snap.val() || {};
+    dataLoaded.verifiers = true;
+    renderAllPages();
+  });
+
+  onValue(ref(db, 'lmis_verifier_assignments'), (snap) => {
+    cachedVerifierAssignments = snap.val() || {};
+    dataLoaded.verifierAssignments = true;
+    renderAllPages();
+  });
 }
 
 // Every listener calls this so that whichever data source finishes loading
@@ -1677,6 +1755,7 @@ function renderAllPages(){
   renderApplicationsPage();
   renderCommunicationPage();
   renderInterventionsPage();
+  renderVerifierAssignmentsPage();
 }
 
 // ---------------- SKELETON LOADERS ----------------
@@ -1740,6 +1819,21 @@ function renderFacilitatorsSkeleton(){
       <div class="main">${skel('38px','38px')}<div class="main-text">${skel('150px','15px')}<div style="margin-top:6px;">${skel('130px','12px')}</div></div></div>
       <div class="meta">${skel('70px','13px')}</div>
     </div>`).join('');
+}
+
+function renderVerifierAssignmentsSkeleton(){
+  document.getElementById('verifiers-empty').style.display = 'none';
+  document.getElementById('verifiers-list').innerHTML = [1,2].map(() => `
+    <div class="simple-row">
+      <div class="main">${skel('38px','38px')}<div class="main-text">${skel('140px','15px')}<div style="margin-top:6px;">${skel('120px','12px')}</div></div></div>
+    </div>`).join('');
+  document.getElementById('verifier-assignments-empty').style.display = 'none';
+  document.getElementById('verifier-assignments-tbody').innerHTML = [1,2].map(() => `
+    <tr>
+      <td>${skel('130px','14px')}</td>
+      <td>${skel('100px','14px')}</td>
+      <td>${skel('140px','30px')}</td>
+    </tr>`).join('');
 }
 
 function renderPoeSkeleton(){
@@ -2042,6 +2136,88 @@ function renderFacilitatorsPage(){
       <div class="meta">${courseCount} course${courseCount===1?'':'s'}</div>`;
     listEl.appendChild(row);
   });
+}
+
+// ---------------- VERIFIER ASSIGNMENTS PAGE ----------------
+function renderVerifiersList(){
+  const listEl = document.getElementById('verifiers-list');
+  const emptyEl = document.getElementById('verifiers-empty');
+  const entries = Object.entries(cachedVerifiers);
+  listEl.innerHTML = '';
+  if (entries.length === 0){ emptyEl.style.display = 'block'; return; }
+  emptyEl.style.display = 'none';
+
+  entries.forEach(([id, v]) => {
+    const courseCount = Object.values(cachedVerifierAssignments).filter(a => a.verifierId === id).length;
+    const row = document.createElement('div');
+    row.className = 'simple-row';
+    row.innerHTML = `
+      <div class="main"><div class="avatar-circle">${escapeHtml((v.name||'?').trim().charAt(0).toUpperCase())}</div><div class="main-text"><strong>${escapeHtml(v.name)}</strong><span>${escapeHtml(v.email||v.phone||'')}</span></div></div>
+      <div class="meta">${courseCount} course${courseCount===1?'':'s'}</div>
+      <button class="verifier-delete" data-id="${id}" title="Remove verifier">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>
+      </button>`;
+    listEl.appendChild(row);
+  });
+
+  listEl.querySelectorAll('.verifier-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Remove this verifier? Any courses assigned to them will become unassigned.')) return;
+      btn.disabled = true;
+      await withDataOverlay('Removing…', async () => {
+        await remove(ref(db, `lmis_verifiers/${btn.dataset.id}`));
+      });
+    });
+  });
+}
+
+function renderVerifierAssignmentsTable(){
+  const tbody = document.getElementById('verifier-assignments-tbody');
+  const emptyEl = document.getElementById('verifier-assignments-empty');
+  const courses = Object.entries(cachedCourses);
+  tbody.innerHTML = '';
+  if (courses.length === 0){ emptyEl.style.display = 'block'; return; }
+  emptyEl.style.display = 'none';
+
+  const verifierOpts = Object.entries(cachedVerifiers).map(([id, v]) => `<option value="${id}">${escapeHtml(v.name)}</option>`).join('');
+
+  courses.forEach(([courseId, c]) => {
+    const facilitator = cachedFacilitators[c.facilitatorId] || { name: '—' };
+    const assignment = cachedVerifierAssignments[courseId];
+    const currentVerifierId = assignment ? assignment.verifierId : '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="cell-name">${escapeHtml(c.title || 'Untitled course')}</div></td>
+      <td>${escapeHtml(facilitator.name)}</td>
+      <td><select class="table-select verifier-select" data-course-id="${courseId}">
+        <option value="">Unassigned</option>
+        ${verifierOpts || '<option value="" disabled>Add a verifier first</option>'}
+      </select></td>`;
+    tbody.appendChild(tr);
+    tr.querySelector('.verifier-select').value = currentVerifierId;
+  });
+
+  tbody.querySelectorAll('.verifier-select').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const courseId = sel.dataset.courseId;
+      const verifierId = sel.value;
+      sel.disabled = true;
+      await withDataOverlay('Saving…', async () => {
+        if (verifierId){
+          await set(ref(db, `lmis_verifier_assignments/${courseId}`), { verifierId, assignedAt: Date.now() });
+        } else {
+          await remove(ref(db, `lmis_verifier_assignments/${courseId}`));
+        }
+      });
+      sel.disabled = false;
+    });
+  });
+}
+
+function renderVerifierAssignmentsPage(){
+  if (!allDataLoaded()) { renderVerifierAssignmentsSkeleton(); return; }
+  renderVerifiersList();
+  renderVerifierAssignmentsTable();
 }
 
 // ---------------- INTERVENTIONS PAGE ----------------
@@ -2538,6 +2714,7 @@ document.getElementById('open-application-modal').addEventListener('click', () =
 document.getElementById('open-enroll-modal').addEventListener('click', () => openModal('enroll-modal-overlay'));
 document.getElementById('open-course-modal').addEventListener('click', () => openModal('course-modal-overlay'));
 document.getElementById('open-facilitator-modal').addEventListener('click', () => openModal('facilitator-modal-overlay'));
+document.getElementById('open-verifier-modal').addEventListener('click', () => openModal('verifier-modal-overlay'));
 document.getElementById('open-poe-modal').addEventListener('click', () => openModal('poe-modal-overlay'));
 document.getElementById('open-enquiry-modal').addEventListener('click', () => openModal('enquiry-modal-overlay'));
 document.getElementById('open-announcement-modal').addEventListener('click', () => openModal('announcement-modal-overlay'));
@@ -2626,6 +2803,22 @@ document.getElementById('facilitator-form').addEventListener('submit', async (e)
 
   e.target.reset();
   closeModal('facilitator-modal-overlay');
+});
+
+document.getElementById('verifier-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = document.getElementById('verifier-name').value.trim();
+  const email = document.getElementById('verifier-email').value.trim();
+  const phone = document.getElementById('verifier-phone').value.trim();
+  if (!name) return;
+
+  await submitWithSpinner(e.target, 'Adding…', async () => {
+    const verRef = push(ref(db, 'lmis_verifiers'));
+    await set(verRef, { name, email, phone, createdAt: serverTimestamp() });
+  });
+
+  e.target.reset();
+  closeModal('verifier-modal-overlay');
 });
 
 document.getElementById('intervention-form').addEventListener('submit', async (e) => {
