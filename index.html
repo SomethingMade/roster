@@ -538,6 +538,12 @@
   .pill.contacted{background:var(--amber-tint);color:var(--amber);}
   .pill.converted{background:var(--teal-tint);color:var(--teal);}
   .pill.closed{background:var(--canvas-line);color:var(--text-soft);}
+  .pill.open{background:var(--coral-tint);color:var(--coral);}
+  .pill.resolved{background:var(--teal-tint);color:var(--teal);}
+  .iv-resolve{background:none;border:none;color:var(--ink-faint);padding:6px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;transition:background .15s ease, color .15s ease;}
+  .iv-resolve:hover{background:var(--teal-tint);color:var(--teal);}
+  .iv-resolve svg{width:15px;height:15px;}
+  .iv-resolve[data-status="resolved"]{color:var(--teal);}
   .empty-state{
     padding:46px 10px;text-align:center;color:var(--text-soft);
     font-size:14px;
@@ -946,6 +952,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 12 6 8Z"/><path d="M9.5 17a2.5 2.5 0 0 0 5 0"/></svg>
       <span class="nav-label">Communication</span>
     </div>
+    <div class="nav-item" data-page="interventions" title="Interventions">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4M12 16.5h.01"/><path d="M10.3 4.1 2.9 17a2 2 0 0 0 1.7 3h14.8a2 2 0 0 0 1.7-3L13.7 4.1a2 2 0 0 0-3.4 0Z"/></svg>
+      <span class="nav-label">Interventions</span>
+    </div>
     </div>
     <div class="spacer"></div>
   </div>
@@ -1138,6 +1148,36 @@
       </div>
     </section>
 
+    <!-- INTERVENTIONS -->
+    <section class="page" id="page-interventions">
+      <div class="page-head">
+        <h1>Interventions</h1>
+        <button class="btn-add" id="open-intervention-modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Log intervention
+        </button>
+      </div>
+      <div class="toolbar">
+        <select id="filter-intervention-status">
+          <option value="">All statuses</option>
+          <option value="open">Open</option>
+          <option value="resolved">Resolved</option>
+        </select>
+      </div>
+      <div class="table-card">
+      <table class="record-table">
+        <thead>
+          <tr><th>Learner</th><th>Type</th><th>Note</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody id="interventions-tbody"></tbody>
+      </table>
+      </div>
+      <div class="empty-state" id="interventions-empty" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 9v4M12 16.5h.01"/><path d="M10.3 4.1 2.9 17a2 2 0 0 0 1.7 3h14.8a2 2 0 0 0 1.7-3L13.7 4.1a2 2 0 0 0-3.4 0Z"/></svg>
+        No interventions logged yet.
+      </div>
+    </section>
+
     <!-- COMMUNICATION -->
     <section class="page" id="page-communication">
       <div class="page-head"><h1>Communication</h1></div>
@@ -1256,6 +1296,29 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="intervention-modal-overlay">
+  <div class="modal">
+    <h2>Log an intervention</h2>
+    <form id="intervention-form">
+      <div class="field"><label>Learner</label><select id="intervention-learner" required></select></div>
+      <div class="field"><label>Type</label>
+        <select id="intervention-type">
+          <option value="academic">Academic support</option>
+          <option value="attendance">Attendance</option>
+          <option value="behavioural">Behavioural</option>
+          <option value="wellbeing">Wellbeing</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Note</label><textarea id="intervention-note" rows="3" placeholder="What happened, and what's the plan?"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close="intervention-modal-overlay">Cancel</button>
+        <button type="submit" class="btn-primary" style="width:auto;">Log intervention</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="modal-overlay" id="announcement-modal-overlay">
   <div class="modal">
     <h2>New announcement</h2>
@@ -1346,8 +1409,10 @@ const storage = getStorage(app);
 // lmis_announcements/{id}    -> { title, body, courseId, createdAt }
 // lmis_messages/{learnerId}/{messageId} -> { body, createdAt }
 // lmis_course_materials/{courseId}/{materialId} -> { name, url, path, size, contentType, uploadedAt }
+// lmis_interventions/{id}    -> { learnerId, type, note, status, createdAt }
 // Storage layout: course_materials/{courseId}/{materialId}_{filename}
 
+let cachedInterventions = {};
 let cachedFacilitators = {};
 let cachedCourses = {};
 let cachedLearners = {};
@@ -1363,10 +1428,10 @@ let expandedPoeEnrollmentId = null;
 let expandedEnquiryId = null;
 let poeCourseFilterInitialized = false;
 
-const dataLoaded = { facilitators:false, courses:false, learners:false, enrollments:false, poeItems:false, poeStatus:false, enquiries:false, applications:false, announcements:false, messages:false };
+const dataLoaded = { facilitators:false, courses:false, learners:false, enrollments:false, poeItems:false, poeStatus:false, enquiries:false, applications:false, announcements:false, messages:false, interventions:false };
 function allDataLoaded(){
   return dataLoaded.facilitators && dataLoaded.courses && dataLoaded.learners && dataLoaded.enrollments &&
-    dataLoaded.poeItems && dataLoaded.poeStatus && dataLoaded.enquiries && dataLoaded.applications && dataLoaded.announcements && dataLoaded.messages;
+    dataLoaded.poeItems && dataLoaded.poeStatus && dataLoaded.enquiries && dataLoaded.applications && dataLoaded.announcements && dataLoaded.messages && dataLoaded.interventions;
 }
 function skel(width, height){ return `<span class="skeleton" style="display:inline-block;width:${width};height:${height};">&nbsp;</span>`; }
 
@@ -1521,6 +1586,7 @@ function startDataListeners(){
   renderLearnersSkeleton();
   renderCoursesSkeleton();
   renderFacilitatorsSkeleton();
+  renderInterventionsSkeleton();
 
   onValue(ref(db, 'lmis_facilitators'), (snap) => {
     cachedFacilitators = snap.val() || {};
@@ -1540,6 +1606,7 @@ function startDataListeners(){
     cachedLearners = snap.val() || {};
     dataLoaded.learners = true;
     renderMessageLearnerSelect();
+    renderInterventionLearnerSelect();
     renderAllPages();
   });
 
@@ -1585,6 +1652,12 @@ function startDataListeners(){
     dataLoaded.messages = true;
     renderAllPages();
   });
+
+  onValue(ref(db, 'lmis_interventions'), (snap) => {
+    cachedInterventions = snap.val() || {};
+    dataLoaded.interventions = true;
+    renderAllPages();
+  });
 }
 
 // Every listener calls this so that whichever data source finishes loading
@@ -1598,6 +1671,7 @@ function renderAllPages(){
   renderEnquiriesPage();
   renderApplicationsPage();
   renderCommunicationPage();
+  renderInterventionsPage();
 }
 
 // ---------------- SKELETON LOADERS ----------------
@@ -1640,6 +1714,18 @@ function renderCoursesSkeleton(){
       <div class="main">${skel('38px','38px')}<div class="main-text">${skel('160px','15px')}<div style="margin-top:6px;">${skel('120px','12px')}</div></div></div>
       <div class="meta">${skel('90px','13px')}</div>
     </div>`).join('');
+}
+
+function renderInterventionsSkeleton(){
+  document.getElementById('interventions-empty').style.display = 'none';
+  document.getElementById('interventions-tbody').innerHTML = [1,2,3].map(() => `
+    <tr>
+      <td>${skel('120px','14px')}</td>
+      <td>${skel('90px','14px')}</td>
+      <td>${skel('160px','13px')}</td>
+      <td>${skel('58px','20px')}</td>
+      <td>${skel('24px','24px')}</td>
+    </tr>`).join('');
 }
 
 function renderFacilitatorsSkeleton(){
@@ -1950,6 +2036,63 @@ function renderFacilitatorsPage(){
       <div class="main"><div class="avatar-circle">${escapeHtml((f.name||'?').trim().charAt(0).toUpperCase())}</div><div class="main-text"><strong>${escapeHtml(f.name)}</strong><span>${escapeHtml(f.email||f.phone||'')}</span></div></div>
       <div class="meta">${courseCount} course${courseCount===1?'':'s'}</div>`;
     listEl.appendChild(row);
+  });
+}
+
+// ---------------- INTERVENTIONS PAGE ----------------
+function renderInterventionLearnerSelect(){
+  const sel = document.getElementById('intervention-learner');
+  const opts = Object.entries(cachedLearners).map(([id, l]) => `<option value="${id}">${escapeHtml(l.name)}</option>`).join('');
+  sel.innerHTML = opts || '<option value="">Enroll a learner first</option>';
+}
+
+function interventionTypeLabel(t){
+  return { academic:'Academic support', attendance:'Attendance', behavioural:'Behavioural', wellbeing:'Wellbeing', other:'Other' }[t] || 'Other';
+}
+
+const filterInterventionStatus = document.getElementById('filter-intervention-status');
+filterInterventionStatus.addEventListener('change', renderInterventionsPage);
+
+function renderInterventionsPage(){
+  if (!allDataLoaded()) { renderInterventionsSkeleton(); return; }
+  const tbody = document.getElementById('interventions-tbody');
+  const emptyEl = document.getElementById('interventions-empty');
+  const sFilter = filterInterventionStatus.value;
+
+  let rows = Object.entries(cachedInterventions).map(([id, iv]) => ({ id, ...iv }));
+  if (sFilter) rows = rows.filter(iv => (iv.status || 'open') === sFilter);
+  rows.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+
+  tbody.innerHTML = '';
+  if (rows.length === 0){
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  rows.forEach(iv => {
+    const learner = cachedLearners[iv.learnerId] || { name: 'Unknown learner' };
+    const status = iv.status || 'open';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="cell-name">${escapeHtml(learner.name)}</div></td>
+      <td>${escapeHtml(interventionTypeLabel(iv.type))}</td>
+      <td><span class="cell-sub">${escapeHtml(iv.note || '—')}</span></td>
+      <td><span class="pill ${status}">${status === 'resolved' ? 'Resolved' : 'Open'}</span></td>
+      <td><button class="iv-resolve" data-id="${iv.id}" data-status="${status}" title="${status === 'resolved' ? 'Reopen' : 'Mark resolved'}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </button></td>`;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('.iv-resolve').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      const nextStatus = btn.dataset.status === 'resolved' ? 'open' : 'resolved';
+      await withDataOverlay('Saving…', async () => {
+        await update(ref(db, `lmis_interventions/${btn.dataset.id}`), { status: nextStatus });
+      });
+    });
   });
 }
 
@@ -2343,6 +2486,7 @@ document.getElementById('open-facilitator-modal').addEventListener('click', () =
 document.getElementById('open-poe-modal').addEventListener('click', () => openModal('poe-modal-overlay'));
 document.getElementById('open-enquiry-modal').addEventListener('click', () => openModal('enquiry-modal-overlay'));
 document.getElementById('open-announcement-modal').addEventListener('click', () => openModal('announcement-modal-overlay'));
+document.getElementById('open-intervention-modal').addEventListener('click', () => openModal('intervention-modal-overlay'));
 
 async function submitWithSpinner(form, busyLabel, fn){
   const btn = form.querySelector('button[type=submit]');
@@ -2421,6 +2565,22 @@ document.getElementById('facilitator-form').addEventListener('submit', async (e)
 
   e.target.reset();
   closeModal('facilitator-modal-overlay');
+});
+
+document.getElementById('intervention-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const learnerId = document.getElementById('intervention-learner').value;
+  const type = document.getElementById('intervention-type').value;
+  const note = document.getElementById('intervention-note').value.trim();
+  if (!learnerId) return;
+
+  await submitWithSpinner(e.target, 'Logging…', async () => {
+    const ivRef = push(ref(db, 'lmis_interventions'));
+    await set(ivRef, { learnerId, type, note, status: 'open', createdAt: Date.now() });
+  });
+
+  e.target.reset();
+  closeModal('intervention-modal-overlay');
 });
 
 document.getElementById('poe-form').addEventListener('submit', async (e) => {
