@@ -1106,6 +1106,10 @@
           <option value="withdrawn">Withdrawn</option>
         </select>
         <div class="fill-space"></div>
+        <button class="btn-ghost" id="export-learners-btn" style="display:inline-flex;align-items:center;gap:6px;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+          Export
+        </button>
         <button class="btn-ghost" id="open-bulk-modal" style="display:inline-flex;align-items:center;gap:6px;">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>
           Bulk upload
@@ -1344,8 +1348,9 @@
 <div class="modal-overlay" id="bulk-modal-overlay">
   <div class="modal" style="max-width:680px;">
     <h2>Bulk upload learners</h2>
-    <p style="margin:-12px 0 14px;font-size:13px;color:var(--text-soft);">Upload an .xlsx, .xls or .csv file with the columns <strong>Name</strong>, <strong>Email</strong>, <strong>Phone</strong> and <strong>Course</strong>. Name is required.</p>
+    <p style="margin:-12px 0 14px;font-size:13px;color:var(--text-soft);">Upload your learner list as-is (the 31-column SETA layout: names, surname, ID number, programme, employer, training provider, demographics, cellphone, email). Simple files with just Name, Email, Phone and Course also work.</p>
     <div class="field"><label>Default course (used when a row has no Course value)</label><select id="bulk-course"></select></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);margin:-4px 0 12px;"><input type="checkbox" id="bulk-autocreate" checked> Create a course from the QUALIFICATION column when no matching course exists</label>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
       <label class="btn-ghost upload-btn" for="bulk-file-input" style="margin:0;">Choose file</label>
       <input type="file" id="bulk-file-input" accept=".xlsx,.xls,.csv" style="display:none;">
@@ -2122,7 +2127,7 @@ function renderLearnersPage(){
   if (sFilter) rows = rows.filter(e => e.status === sFilter);
   if (q) rows = rows.filter(e => {
     const learner = cachedLearners[e.learnerId];
-    return learner && (learner.name||'').toLowerCase().includes(q);
+    return learner && [(learner.name||''), (learner.idNumber||''), (learner.email||'')].some(v => String(v).toLowerCase().includes(q));
   });
 
   tbody.innerHTML = '';
@@ -2185,6 +2190,7 @@ function buildDetailRow(e){
       </div>
       <button class="detail-save" id="detail-save-${e.id}">Save changes</button>
     </div>
+    ${buildLearnerProfileHtml(e)}
     ${buildLearnerPoeHtml(e)}`;
   tr.appendChild(td);
 
@@ -2211,6 +2217,32 @@ function buildDetailRow(e){
   }, 0);
 
   return tr;
+}
+
+// ---------------- LEARNER PROFILE (full SETA record) ----------------
+const PROFILE_GROUPS = [
+  ['Personal', [['idNumber','ID number'],['gender','Gender'],['race','Race'],['age','Age'],['disability','Disability'],['youth','Youth'],['rsaCitizen','RSA citizen'],['phone','Cellphone'],['email','Email']]],
+  ['Location', [['province','Province'],['municipality','District / municipality'],['residentialArea','Residential area'],['areaType','Urban / rural']]],
+  ['Programme', [['programmeType','Programme type'],['qualification','Qualification'],['nqfLevel','NQF level'],['ofoCode','OFO code'],['startDate','Start date'],['endDate','End date'],['funded','SETA / industry funded'],['amountSpent','Amount spent']]],
+  ['Employer', [['employer','Employer'],['employerReg','Registration / SDL no.'],['employerContact','Contact'],['hostEmployer','Host employer']]],
+  ['Training provider', [['provider','Provider'],['providerAccred','Accreditation no.'],['providerContact','Contact'],['providerType','Private / public']]]
+];
+function buildLearnerProfileHtml(e){
+  const l = cachedLearners[e.learnerId] || {};
+  const hasProfile = PROFILE_GROUPS.slice(1).some(([, fields]) => fields.some(([k]) => l[k] !== undefined && l[k] !== '')) || l.idNumber;
+  if (!hasProfile) return '';
+  const fmt = (k, v) => {
+    if (v === undefined || v === null || v === '') return '—';
+    if (k === 'amountSpent' && !isNaN(Number(v))) return 'R ' + Number(v).toLocaleString('en-ZA', { minimumFractionDigits: 2 });
+    if (k === 'startDate' || k === 'endDate') return formatCourseDate(v);
+    return escapeHtml(String(v));
+  };
+  const groups = PROFILE_GROUPS.map(([title, fields]) => {
+    if (!fields.some(([k]) => l[k] !== undefined && l[k] !== '')) return '';
+    const cells = fields.map(([k, label]) => `<div><div class="k">${label}</div><div class="v">${fmt(k, l[k])}</div></div>`).join('');
+    return `<div style="font-size:12px;font-weight:600;color:var(--violet);margin:0 0 8px;">${title}</div><div class="poe-course-grid">${cells}</div>`;
+  }).join('');
+  return `<div class="learner-poe"><div class="learner-poe-head"><h3>Learner profile</h3></div>${groups}</div>`;
 }
 
 // ---------------- LEARNER POE (under each learner) ----------------
@@ -3053,68 +3085,145 @@ document.getElementById('enroll-form').addEventListener('submit', async (e) => {
 });
 
 // ---------------- BULK LEARNER UPLOAD (xlsx / xls / csv) ----------------
-let bulkRows = [];
-const BULK_ALIASES = {
-  name:  ['name','fullname','learner','learnername','student','studentname'],
-  email: ['email','emailaddress','mail'],
-  phone: ['phone','phonenumber','cell','cellphone','cellnumber','mobile','mobilenumber','contact','contactnumber','tel'],
-  course:['course','coursetitle','coursename','programme','program']
-};
+// [key, exact column label used in the SETA learner list, header matcher] — in file order.
+const LEARNER_FIELDS = [
+  ['firstName','NAMES OF THE LEARNER',/^(namesofthelearner|nameofthelearner|names|firstnames?|name|fullname|learnername|learner|student|studentname)$/],
+  ['surname','SURNAME OF THE LEARNER',/surname|lastname/],
+  ['idNumber','ID NUMBER OF THE LEARNER',/idnumber|^id$/],
+  ['programmeType','TYPE OF LEARNING PROGRAMME (INTERNSHIP) ',/^typeoflearning|^programmetype/],
+  ['startDate','DATE THE LEARNER  ENTERED THE LEARNING  PROGRAMMME',/^datethe|entered|^startdate$/],
+  ['endDate','END DATE',/^enddate$/],
+  ['ofoCode','OFO CODE VERSION 2012',/^ofocode/],
+  ['nqfLevel','NQF LEVEL (NQF ACT)',/nqf/],
+  ['qualification','QUALIFICATION  AS PER OFO CODE/DESCRIPTION OF THE QUALIFICATION',/qualification/],
+  ['employer','NAME OF THE EMPLOYER',/^(nameoftheemployer|employer|employername)$/],
+  ['employerReg','EMPLOYER REGISTRATION/SDL NUMBER',/employer.*(registration|sdl)/],
+  ['employerContact','EMPLOYER CONTACT DETAILS',/employer.*contact/],
+  ['hostEmployer','HOST EMPLOYER',/^hostemployer/],
+  ['provider','NAME OF THE TRAINING PROVIDER',/^nameofthetrain\w*provider$/],
+  ['providerAccred','TRAINING PROVIDER AGREDITATION NUMBER',/provider.*a[cg]+redit/],
+  ['providerContact','TRAININING PROVIDER CONTACT DETAILS',/provider.*contact/],
+  ['providerType','IS TRAINING PROVIDER PRIVATE /PUBLIC ',/private|public/],
+  ['province','LEARNER PROVINCE',/province/],
+  ['municipality','LEARNER LOCAL/DISTRICT MUNICIPALITY ',/municipality|district/],
+  ['residentialArea','SPECIFY LEARNER RESIDENTIAL  AREA',/^specify.*residential/],
+  ['areaType','IS THE LEARNER RESIDENTIAL AREA URBAN / RURAL',/^is.*residential.*(urban|rural)/],
+  ['funded','IS THE PROGRAMME SETA /INDUSTRY FUNDED ',/funded/],
+  ['amountSpent','AMOUNT SPENT PER LEARNER',/amountspent/],
+  ['race','RACE',/^race$/],
+  ['gender','GENDER',/^(gender|sex)$/],
+  ['age','AGE',/^age$/],
+  ['disability','DISABILITY',/disab/],
+  ['youth','YOUTH',/^youth$/],
+  ['rsaCitizen','RSA CITIZEN',/citizen/],
+  ['phone','CELLPHONE',/^(cellphone|cell|cellnumber|phone|phonenumber|mobile|mobilenumber|contact|contactnumber|tel)$/],
+  ['email','EMAIL',/^(email|emailaddress|mail)$/]
+];
+const LEARNER_COURSE_MATCH = /^(course|coursetitle|coursename)$/;
+
 function bulkNorm(h){ return String(h == null ? '' : h).toLowerCase().replace(/[^a-z0-9]/g, ''); }
-function bulkPick(row, key){
-  for (const k of Object.keys(row)){
-    if (BULK_ALIASES[key].includes(bulkNorm(k))) return String(row[k] == null ? '' : row[k]).trim();
+function bulkMapHeaders(headerRow){
+  const map = {}; // column index -> key
+  headerRow.forEach((h, idx) => {
+    const n = bulkNorm(h);
+    if (!n) return;
+    if (LEARNER_COURSE_MATCH.test(n)){ map[idx] = 'course'; return; }
+    const hit = LEARNER_FIELDS.find(([key, , re]) => re.test(n) && !Object.values(map).includes(key));
+    if (hit) map[idx] = hit[0];
+  });
+  return map;
+}
+function bulkCell(v, key){
+  const isDate = key === 'startDate' || key === 'endDate';
+  if (v instanceof Date) return new Date(v.getTime() + 12 * 3600e3).toISOString().slice(0, 10);
+  if (typeof v === 'number'){
+    if (isDate && v > 20000 && v < 80000 && window.XLSX){
+      const d = XLSX.SSF.parse_date_code(v);
+      return `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`;
+    }
+    return String(v);
   }
-  return '';
+  let s = String(v == null ? '' : v).trim();
+  if (isDate){
+    const m = s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
+    if (m) s = `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  }
+  return s;
 }
 function bulkNormPhone(p){
   const d = String(p || '').replace(/[\s\-().]/g, '');
   if (!d) return '';
-  if (d.startsWith('+')) return d;
+  if (/^\+27\d{9}$/.test(d)) return d;
   if (/^27\d{9}$/.test(d)) return '+' + d;
   if (/^0\d{9}$/.test(d)) return '+27' + d.slice(1);
   if (/^\d{9}$/.test(d)) return '+27' + d; // Excel drops the leading zero on numeric cells
-  return d;
+  return String(p).trim(); // keep as typed; flagged in the preview
+}
+function bulkNormId(v){
+  const d = String(v || '').replace(/\s/g, '');
+  return /^\d{12}$/.test(d) ? '0' + d : d; // Excel drops a leading zero on numeric IDs
 }
 function bulkExistingKeys(){
   const keys = new Set();
   Object.values(cachedEnrollments).forEach(en => {
     const l = cachedLearners[en.learnerId];
     if (!l) return;
+    if (l.idNumber) keys.add(`${en.courseId}|i|${l.idNumber}`);
     if (l.email) keys.add(`${en.courseId}|e|${l.email.toLowerCase()}`);
     keys.add(`${en.courseId}|n|${(l.name || '').toLowerCase()}`);
   });
   return keys;
 }
-function bulkBuildRows(json){
+function bulkBuildRows(data){
   const defaultCourse = document.getElementById('bulk-course').value;
+  const autoCreate = document.getElementById('bulk-autocreate').checked;
   const byTitle = {};
   Object.entries(cachedCourses).forEach(([id, c]) => { byTitle[(c.title || '').trim().toLowerCase()] = id; });
   const seen = bulkExistingKeys();
-  return json.map((raw, i) => {
-    const name = bulkPick(raw, 'name');
-    const email = bulkPick(raw, 'email');
-    const phone = bulkNormPhone(bulkPick(raw, 'phone'));
-    const courseCell = bulkPick(raw, 'course');
-    const r = { line: i + 2, name, email, phone, courseId: '', courseTitle: '', state: 'ready', msg: 'Ready' };
+  return data.map(v => {
+    const name = [v.firstName, v.surname].filter(Boolean).join(' ').trim();
+    const idNumber = bulkNormId(v.idNumber);
+    const phone = bulkNormPhone(v.phone);
+    const email = (v.email || '').trim();
+    const r = { line: v._line, name, idNumber, email, phone, startDate: v.startDate || '', endDate: v.endDate || '',
+                courseId: '', courseTitle: '', isNew: false, state: 'ready', msg: 'Ready', warn: [],
+                vals: Object.assign({}, v, { idNumber, phone, email }) };
+    delete r.vals._line;
     if (!name){ r.state = 'error'; r.msg = 'Missing name'; return r; }
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ r.state = 'error'; r.msg = 'Invalid email'; return r; }
+
+    const courseCell = (v.course || '').trim();
+    const qual = (v.qualification || '').trim();
+    let courseId = '';
     if (courseCell){
-      const id = byTitle[courseCell.toLowerCase()];
-      if (!id){ r.state = 'error'; r.msg = `Course "${courseCell}" not found`; return r; }
-      r.courseId = id;
-    } else if (defaultCourse){
-      r.courseId = defaultCourse;
-    } else { r.state = 'error'; r.msg = 'No course'; return r; }
-    r.courseTitle = (cachedCourses[r.courseId] || {}).title || '';
-    const k1 = email ? `${r.courseId}|e|${email.toLowerCase()}` : '';
-    const k2 = `${r.courseId}|n|${name.toLowerCase()}`;
-    if ((k1 && seen.has(k1)) || seen.has(k2)){ r.state = 'duplicate'; r.msg = 'Already enrolled'; return r; }
-    if (k1) seen.add(k1);
-    seen.add(k2);
+      courseId = byTitle[courseCell.toLowerCase()] || '';
+      if (!courseId){ r.state = 'error'; r.msg = `Course "${courseCell}" not found`; return r; }
+    } else {
+      courseId = qual ? (byTitle[qual.toLowerCase()] || '') : '';
+      if (!courseId && defaultCourse) courseId = defaultCourse;
+      if (!courseId && qual && autoCreate){ courseId = 'new:' + qual.toLowerCase(); r.isNew = true; }
+      if (!courseId){ r.state = 'error'; r.msg = 'No course (pick a default or allow creating one)'; return r; }
+    }
+    r.courseId = courseId;
+    r.courseTitle = r.isNew ? qual : ((cachedCourses[courseId] || {}).title || '');
+
+    const keys = idNumber ? [`${courseId}|i|${idNumber}`] : (email ? [`${courseId}|e|${email.toLowerCase()}`] : [`${courseId}|n|${name.toLowerCase()}`]);
+    if (keys.some(k => seen.has(k))){ r.state = 'duplicate'; r.msg = 'Already enrolled'; return r; }
+    if (idNumber) seen.add(`${courseId}|i|${idNumber}`);
+    if (email) seen.add(`${courseId}|e|${email.toLowerCase()}`);
+    seen.add(`${courseId}|n|${name.toLowerCase()}`);
+
+    if (idNumber && !/^\d{13}$/.test(idNumber)) r.warn.push('ID is not 13 digits');
+    if (phone && !/^\+27\d{9}$/.test(phone)) r.warn.push('phone looks incomplete');
+    if (r.isNew) r.warn.push('new course');
+    if (r.warn.length) r.msg = 'Ready · ' + r.warn.join(', ');
     return r;
   });
 }
+// ---- end pure helpers ----
+
+let bulkRows = [];
+let bulkLastData = [];
 function bulkRender(){
   const sumEl = document.getElementById('bulk-summary');
   const prevEl = document.getElementById('bulk-preview');
@@ -3123,41 +3232,44 @@ function bulkRender(){
   const ready = bulkRows.filter(r => r.state === 'ready').length;
   const dup = bulkRows.filter(r => r.state === 'duplicate').length;
   const err = bulkRows.filter(r => r.state === 'error').length;
+  const newCourses = new Set(bulkRows.filter(r => r.state === 'ready' && r.isNew).map(r => r.courseId)).size;
   sumEl.style.display = 'block';
-  sumEl.textContent = `${ready} ready · ${dup} duplicate${dup === 1 ? '' : 's'} (skipped) · ${err} with errors (skipped)`;
-  const color = { ready:'var(--ink)', duplicate:'var(--text-soft)', error:'#c0392b' };
+  sumEl.textContent = `${ready} ready · ${dup} duplicate${dup === 1 ? '' : 's'} (skipped) · ${err} with errors (skipped)` + (newCourses ? ` · ${newCourses} new course${newCourses === 1 ? '' : 's'} will be created` : '');
+  const colorOf = r => r.state === 'error' ? '#c0392b' : r.state === 'duplicate' ? 'var(--text-soft)' : (r.warn.some(w => w !== 'new course') ? '#b7791f' : 'var(--ink)');
   prevEl.style.display = 'block';
-  prevEl.innerHTML = `<table class="record-table" style="margin:0;"><thead><tr><th>Row</th><th>Name</th><th>Email</th><th>Phone</th><th>Course</th><th>Result</th></tr></thead><tbody>${
-    bulkRows.map(r => `<tr style="cursor:default;color:${color[r.state]};"><td>${r.line}</td><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.email)}</td><td>${escapeHtml(r.phone)}</td><td>${escapeHtml(r.courseTitle)}</td><td>${escapeHtml(r.msg)}</td></tr>`).join('')
+  prevEl.innerHTML = `<table class="record-table" style="margin:0;"><thead><tr><th>Row</th><th>Name</th><th>ID number</th><th>Course</th><th>Start</th><th>Phone</th><th>Result</th></tr></thead><tbody>${
+    bulkRows.map(r => `<tr style="cursor:default;color:${colorOf(r)};"><td>${r.line}</td><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.idNumber)}</td><td>${escapeHtml(r.courseTitle)}</td><td>${escapeHtml(r.startDate)}</td><td>${escapeHtml(r.phone)}</td><td>${escapeHtml(r.msg)}</td></tr>`).join('')
   }</tbody></table>`;
   btn.disabled = ready === 0;
   btn.textContent = ready ? `Import ${ready} learner${ready === 1 ? '' : 's'}` : 'Import learners';
 }
-let bulkLastJson = [];
+function bulkRebuild(){ if (bulkLastData.length){ bulkRows = bulkBuildRows(bulkLastData); bulkRender(); } }
+
 document.getElementById('open-bulk-modal').addEventListener('click', () => {
   const opts = Object.entries(cachedCourses).map(([id, c]) => `<option value="${id}">${escapeHtml(c.title || 'Untitled course')}</option>`).join('');
-  document.getElementById('bulk-course').innerHTML = `<option value="">None — use the Course column</option>${opts}`;
+  document.getElementById('bulk-course').innerHTML = `<option value="">None — match by Qualification / Course column</option>${opts}`;
   document.getElementById('bulk-file-input').value = '';
   document.getElementById('bulk-file-name').textContent = '';
-  bulkRows = []; bulkLastJson = [];
+  bulkRows = []; bulkLastData = [];
   bulkRender();
   openModal('bulk-modal-overlay');
 });
-document.getElementById('bulk-course').addEventListener('change', () => {
-  if (bulkLastJson.length){ bulkRows = bulkBuildRows(bulkLastJson); bulkRender(); }
-});
+document.getElementById('bulk-course').addEventListener('change', bulkRebuild);
+document.getElementById('bulk-autocreate').addEventListener('change', bulkRebuild);
+
 document.getElementById('bulk-template-btn').addEventListener('click', () => {
   if (!window.XLSX){ alert('The spreadsheet library is still loading. Try again in a moment.'); return; }
   const firstCourse = Object.values(cachedCourses)[0];
-  const ws = XLSX.utils.aoa_to_sheet([
-    ['Name', 'Email', 'Phone', 'Course'],
-    ['Thandi Mokoena', 'thandi@example.com', '0821234567', firstCourse ? firstCourse.title : 'Course title']
-  ]);
-  ws['!cols'] = [{ wch: 26 }, { wch: 28 }, { wch: 16 }, { wch: 28 }];
+  const sample = { firstName:'Thandi', surname:'Mokoena', idNumber:'0001015009087', programmeType:'Learnership for Unemployed Learners',
+    startDate:'2026-06-24', endDate:'2027-06-30', nqfLevel:'NQF Level 4', qualification: firstCourse ? firstCourse.title : 'Occupational Certificate: Cloud Administrator',
+    province:'Limpopo', gender:'Female', age:'25', phone:'0821234567', email:'thandi@example.com' };
+  const ws = XLSX.utils.aoa_to_sheet([LEARNER_FIELDS.map(f => f[1]), LEARNER_FIELDS.map(f => sample[f[0]] || '')]);
+  ws['!cols'] = LEARNER_FIELDS.map(f => ({ wch: Math.max(16, Math.min(34, f[1].length)) }));
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Learners');
-  XLSX.writeFile(wb, 'learners-template.xlsx');
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet');
+  XLSX.writeFile(wb, 'learner-list-template.xlsx');
 });
+
 document.getElementById('bulk-file-input').addEventListener('change', async (ev) => {
   const file = ev.target.files[0];
   if (!file) return;
@@ -3165,17 +3277,33 @@ document.getElementById('bulk-file-input').addEventListener('change', async (ev)
   if (!window.XLSX){ alert('The spreadsheet library is still loading. Try again in a moment.'); return; }
   try {
     const buf = await file.arrayBuffer();
-    const wb = XLSX.read(buf, { type: 'array' });
+    const wb = XLSX.read(buf, { type: 'array', cellDates: true });
     const ws = wb.Sheets[wb.SheetNames[0]];
-    bulkLastJson = XLSX.utils.sheet_to_json(ws, { defval: '' }).filter(r => Object.values(r).some(v => String(v).trim() !== ''));
-    if (!bulkLastJson.length){ alert('No rows found in the first sheet.'); bulkRows = []; bulkRender(); return; }
-    bulkRows = bulkBuildRows(bulkLastJson);
-    bulkRender();
+    const grid = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', blankrows: false });
+    if (grid.length < 2){ alert('No data rows found in the first sheet.'); bulkRows = []; bulkLastData = []; bulkRender(); return; }
+    const map = bulkMapHeaders(grid[0]);
+    const keys = Object.values(map);
+    if (!keys.includes('firstName') && !keys.includes('surname')){
+      alert('Could not find a name column. The first row must contain headers such as "NAMES OF THE LEARNER" and "SURNAME OF THE LEARNER" (or "Name").');
+      bulkRows = []; bulkLastData = []; bulkRender(); return;
+    }
+    bulkLastData = [];
+    grid.slice(1).forEach((cells, i) => {
+      const v = { _line: i + 2 };
+      let any = false;
+      Object.entries(map).forEach(([idx, key]) => {
+        const val = bulkCell(cells[idx], key);
+        if (val !== '') { v[key] = val; any = true; }
+      });
+      if (any) bulkLastData.push(v);
+    });
+    bulkRebuild();
   } catch (err){
     console.error(err);
     alert('Could not read that file. Please upload a valid .xlsx, .xls or .csv.');
   }
 });
+
 document.getElementById('bulk-import-btn').addEventListener('click', async () => {
   const ready = bulkRows.filter(r => r.state === 'ready');
   if (!ready.length) return;
@@ -3184,19 +3312,46 @@ document.getElementById('bulk-import-btn').addEventListener('click', async () =>
   btn.innerHTML = '<span class="spinner"></span>Importing…';
   try {
     await withDataOverlay('Importing learners…', async () => {
+      // 1) create any new courses (from the Qualification column)
+      const newCourseIds = {};
+      const newCourseUpdates = {};
+      ready.filter(r => r.isNew).forEach(r => {
+        let c = newCourseIds[r.courseId];
+        if (!c){
+          c = newCourseIds[r.courseId] = { key: push(ref(db, 'lmis_courses')).key, title: r.courseTitle, startDate: '', endDate: '' };
+        }
+        if (r.startDate && (!c.startDate || r.startDate < c.startDate)) c.startDate = r.startDate;
+        if (r.endDate && r.endDate > c.endDate) c.endDate = r.endDate;
+      });
+      Object.values(newCourseIds).forEach(c => {
+        newCourseUpdates[`lmis_courses/${c.key}`] = { title: c.title, facilitatorId: '', startDate: c.startDate, endDate: c.endDate, createdAt: serverTimestamp() };
+      });
+      if (Object.keys(newCourseUpdates).length) await update(ref(db), newCourseUpdates);
+
+      // 2) learners + enrolments, in batches
       for (let i = 0; i < ready.length; i += 100){
         const updates = {};
         ready.slice(i, i + 100).forEach(r => {
+          const courseId = r.isNew ? newCourseIds[r.courseId].key : r.courseId;
           const lKey = push(ref(db, 'lmis_learners')).key;
           const eKey = push(ref(db, 'lmis_enrollments')).key;
-          updates[`lmis_learners/${lKey}`] = { name: r.name, email: r.email, phone: r.phone, createdAt: serverTimestamp() };
-          updates[`lmis_enrollments/${eKey}`] = { learnerId: lKey, courseId: r.courseId, status: 'active', progressPct: 0, lastActivityAt: Date.now() };
+          const learner = { name: r.name, email: r.email || '', phone: r.phone || '', createdAt: serverTimestamp() };
+          Object.entries(r.vals).forEach(([k, val]) => {
+            if (k === 'course' || val === '' || val == null) return;
+            if (k === 'phone' || k === 'email') return;
+            learner[k] = ((k === 'amountSpent' || k === 'age') && val !== '' && !isNaN(Number(val))) ? Number(val) : val;
+          });
+          updates[`lmis_learners/${lKey}`] = learner;
+          const enr = { learnerId: lKey, courseId, status: 'active', progressPct: 0, lastActivityAt: Date.now() };
+          if (r.startDate) enr.startDate = r.startDate;
+          if (r.endDate) enr.endDate = r.endDate;
+          updates[`lmis_enrollments/${eKey}`] = enr;
         });
         await update(ref(db), updates);
       }
     });
     const n = ready.length;
-    bulkRows = []; bulkLastJson = [];
+    bulkRows = []; bulkLastData = [];
     document.getElementById('bulk-file-input').value = '';
     document.getElementById('bulk-file-name').textContent = '';
     bulkRender();
@@ -3209,6 +3364,31 @@ document.getElementById('bulk-import-btn').addEventListener('click', async () =>
     btn.disabled = false;
     btn.textContent = 'Retry import';
   }
+});
+
+// ---- Export in the same 31-column layout ----
+document.getElementById('export-learners-btn').addEventListener('click', () => {
+  if (!window.XLSX){ alert('The spreadsheet library is still loading. Try again in a moment.'); return; }
+  const q = learnerSearch.value.trim().toLowerCase();
+  let rows = Object.entries(cachedEnrollments).map(([id, e]) => ({ id, ...e }));
+  if (filterCourse.value) rows = rows.filter(e => e.courseId === filterCourse.value);
+  if (filterStatus.value) rows = rows.filter(e => e.status === filterStatus.value);
+  if (q) rows = rows.filter(e => { const l = cachedLearners[e.learnerId]; return l && [(l.name||''), (l.idNumber||''), (l.email||'')].some(v => String(v).toLowerCase().includes(q)); });
+  if (!rows.length){ alert('No learners to export.'); return; }
+  const aoa = [LEARNER_FIELDS.map(f => f[1])];
+  rows.forEach(e => {
+    const l = cachedLearners[e.learnerId] || {};
+    const c = cachedCourses[e.courseId] || {};
+    const parts = (l.name || '').split(' ');
+    const fallback = { firstName: l.firstName || parts.slice(0, -1).join(' ') || parts[0] || '', surname: l.surname || (parts.length > 1 ? parts[parts.length - 1] : ''),
+      qualification: l.qualification || c.title || '', startDate: l.startDate || e.startDate || c.startDate || '', endDate: l.endDate || e.endDate || c.endDate || '' };
+    aoa.push(LEARNER_FIELDS.map(([key]) => (l[key] !== undefined && l[key] !== '' ? l[key] : (fallback[key] !== undefined ? fallback[key] : ''))));
+  });
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = LEARNER_FIELDS.map(f => ({ wch: Math.max(16, Math.min(34, f[1].length)) }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet');
+  XLSX.writeFile(wb, 'learner_list.xlsx');
 });
 
 document.getElementById('course-form').addEventListener('submit', async (e) => {
