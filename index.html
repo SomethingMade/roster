@@ -864,6 +864,7 @@
   }
 </style>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 </head>
 <body>
 
@@ -1105,6 +1106,10 @@
           <option value="withdrawn">Withdrawn</option>
         </select>
         <div class="fill-space"></div>
+        <button class="btn-ghost" id="open-bulk-modal" style="display:inline-flex;align-items:center;gap:6px;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>
+          Bulk upload
+        </button>
         <button class="btn-add" id="open-enroll-modal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           Enroll learner
@@ -1333,6 +1338,26 @@
         <button type="submit" class="btn-primary" style="width:auto;">Enroll</button>
       </div>
     </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="bulk-modal-overlay">
+  <div class="modal" style="max-width:680px;">
+    <h2>Bulk upload learners</h2>
+    <p style="margin:-12px 0 14px;font-size:13px;color:var(--text-soft);">Upload an .xlsx, .xls or .csv file with the columns <strong>Name</strong>, <strong>Email</strong>, <strong>Phone</strong> and <strong>Course</strong>. Name is required.</p>
+    <div class="field"><label>Default course (used when a row has no Course value)</label><select id="bulk-course"></select></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+      <label class="btn-ghost upload-btn" for="bulk-file-input" style="margin:0;">Choose file</label>
+      <input type="file" id="bulk-file-input" accept=".xlsx,.xls,.csv" style="display:none;">
+      <button type="button" class="btn-ghost" id="bulk-template-btn">Download template</button>
+      <span id="bulk-file-name" style="font-size:13px;color:var(--text-soft);align-self:center;"></span>
+    </div>
+    <div id="bulk-summary" style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:8px;display:none;"></div>
+    <div id="bulk-preview" style="max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:12px;display:none;"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-close="bulk-modal-overlay">Close</button>
+      <button type="button" class="btn-primary" id="bulk-import-btn" style="width:auto;" disabled>Import learners</button>
+    </div>
   </div>
 </div>
 
@@ -3025,6 +3050,165 @@ document.getElementById('enroll-form').addEventListener('submit', async (e) => {
 
   e.target.reset();
   closeModal('enroll-modal-overlay');
+});
+
+// ---------------- BULK LEARNER UPLOAD (xlsx / xls / csv) ----------------
+let bulkRows = [];
+const BULK_ALIASES = {
+  name:  ['name','fullname','learner','learnername','student','studentname'],
+  email: ['email','emailaddress','mail'],
+  phone: ['phone','phonenumber','cell','cellphone','cellnumber','mobile','mobilenumber','contact','contactnumber','tel'],
+  course:['course','coursetitle','coursename','programme','program']
+};
+function bulkNorm(h){ return String(h == null ? '' : h).toLowerCase().replace(/[^a-z0-9]/g, ''); }
+function bulkPick(row, key){
+  for (const k of Object.keys(row)){
+    if (BULK_ALIASES[key].includes(bulkNorm(k))) return String(row[k] == null ? '' : row[k]).trim();
+  }
+  return '';
+}
+function bulkNormPhone(p){
+  const d = String(p || '').replace(/[\s\-().]/g, '');
+  if (!d) return '';
+  if (d.startsWith('+')) return d;
+  if (/^27\d{9}$/.test(d)) return '+' + d;
+  if (/^0\d{9}$/.test(d)) return '+27' + d.slice(1);
+  if (/^\d{9}$/.test(d)) return '+27' + d; // Excel drops the leading zero on numeric cells
+  return d;
+}
+function bulkExistingKeys(){
+  const keys = new Set();
+  Object.values(cachedEnrollments).forEach(en => {
+    const l = cachedLearners[en.learnerId];
+    if (!l) return;
+    if (l.email) keys.add(`${en.courseId}|e|${l.email.toLowerCase()}`);
+    keys.add(`${en.courseId}|n|${(l.name || '').toLowerCase()}`);
+  });
+  return keys;
+}
+function bulkBuildRows(json){
+  const defaultCourse = document.getElementById('bulk-course').value;
+  const byTitle = {};
+  Object.entries(cachedCourses).forEach(([id, c]) => { byTitle[(c.title || '').trim().toLowerCase()] = id; });
+  const seen = bulkExistingKeys();
+  return json.map((raw, i) => {
+    const name = bulkPick(raw, 'name');
+    const email = bulkPick(raw, 'email');
+    const phone = bulkNormPhone(bulkPick(raw, 'phone'));
+    const courseCell = bulkPick(raw, 'course');
+    const r = { line: i + 2, name, email, phone, courseId: '', courseTitle: '', state: 'ready', msg: 'Ready' };
+    if (!name){ r.state = 'error'; r.msg = 'Missing name'; return r; }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ r.state = 'error'; r.msg = 'Invalid email'; return r; }
+    if (courseCell){
+      const id = byTitle[courseCell.toLowerCase()];
+      if (!id){ r.state = 'error'; r.msg = `Course "${courseCell}" not found`; return r; }
+      r.courseId = id;
+    } else if (defaultCourse){
+      r.courseId = defaultCourse;
+    } else { r.state = 'error'; r.msg = 'No course'; return r; }
+    r.courseTitle = (cachedCourses[r.courseId] || {}).title || '';
+    const k1 = email ? `${r.courseId}|e|${email.toLowerCase()}` : '';
+    const k2 = `${r.courseId}|n|${name.toLowerCase()}`;
+    if ((k1 && seen.has(k1)) || seen.has(k2)){ r.state = 'duplicate'; r.msg = 'Already enrolled'; return r; }
+    if (k1) seen.add(k1);
+    seen.add(k2);
+    return r;
+  });
+}
+function bulkRender(){
+  const sumEl = document.getElementById('bulk-summary');
+  const prevEl = document.getElementById('bulk-preview');
+  const btn = document.getElementById('bulk-import-btn');
+  if (!bulkRows.length){ sumEl.style.display = 'none'; prevEl.style.display = 'none'; btn.disabled = true; btn.textContent = 'Import learners'; return; }
+  const ready = bulkRows.filter(r => r.state === 'ready').length;
+  const dup = bulkRows.filter(r => r.state === 'duplicate').length;
+  const err = bulkRows.filter(r => r.state === 'error').length;
+  sumEl.style.display = 'block';
+  sumEl.textContent = `${ready} ready · ${dup} duplicate${dup === 1 ? '' : 's'} (skipped) · ${err} with errors (skipped)`;
+  const color = { ready:'var(--ink)', duplicate:'var(--text-soft)', error:'#c0392b' };
+  prevEl.style.display = 'block';
+  prevEl.innerHTML = `<table class="record-table" style="margin:0;"><thead><tr><th>Row</th><th>Name</th><th>Email</th><th>Phone</th><th>Course</th><th>Result</th></tr></thead><tbody>${
+    bulkRows.map(r => `<tr style="cursor:default;color:${color[r.state]};"><td>${r.line}</td><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.email)}</td><td>${escapeHtml(r.phone)}</td><td>${escapeHtml(r.courseTitle)}</td><td>${escapeHtml(r.msg)}</td></tr>`).join('')
+  }</tbody></table>`;
+  btn.disabled = ready === 0;
+  btn.textContent = ready ? `Import ${ready} learner${ready === 1 ? '' : 's'}` : 'Import learners';
+}
+let bulkLastJson = [];
+document.getElementById('open-bulk-modal').addEventListener('click', () => {
+  const opts = Object.entries(cachedCourses).map(([id, c]) => `<option value="${id}">${escapeHtml(c.title || 'Untitled course')}</option>`).join('');
+  document.getElementById('bulk-course').innerHTML = `<option value="">None — use the Course column</option>${opts}`;
+  document.getElementById('bulk-file-input').value = '';
+  document.getElementById('bulk-file-name').textContent = '';
+  bulkRows = []; bulkLastJson = [];
+  bulkRender();
+  openModal('bulk-modal-overlay');
+});
+document.getElementById('bulk-course').addEventListener('change', () => {
+  if (bulkLastJson.length){ bulkRows = bulkBuildRows(bulkLastJson); bulkRender(); }
+});
+document.getElementById('bulk-template-btn').addEventListener('click', () => {
+  if (!window.XLSX){ alert('The spreadsheet library is still loading. Try again in a moment.'); return; }
+  const firstCourse = Object.values(cachedCourses)[0];
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['Name', 'Email', 'Phone', 'Course'],
+    ['Thandi Mokoena', 'thandi@example.com', '0821234567', firstCourse ? firstCourse.title : 'Course title']
+  ]);
+  ws['!cols'] = [{ wch: 26 }, { wch: 28 }, { wch: 16 }, { wch: 28 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Learners');
+  XLSX.writeFile(wb, 'learners-template.xlsx');
+});
+document.getElementById('bulk-file-input').addEventListener('change', async (ev) => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  document.getElementById('bulk-file-name').textContent = file.name;
+  if (!window.XLSX){ alert('The spreadsheet library is still loading. Try again in a moment.'); return; }
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    bulkLastJson = XLSX.utils.sheet_to_json(ws, { defval: '' }).filter(r => Object.values(r).some(v => String(v).trim() !== ''));
+    if (!bulkLastJson.length){ alert('No rows found in the first sheet.'); bulkRows = []; bulkRender(); return; }
+    bulkRows = bulkBuildRows(bulkLastJson);
+    bulkRender();
+  } catch (err){
+    console.error(err);
+    alert('Could not read that file. Please upload a valid .xlsx, .xls or .csv.');
+  }
+});
+document.getElementById('bulk-import-btn').addEventListener('click', async () => {
+  const ready = bulkRows.filter(r => r.state === 'ready');
+  if (!ready.length) return;
+  const btn = document.getElementById('bulk-import-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Importing…';
+  try {
+    await withDataOverlay('Importing learners…', async () => {
+      for (let i = 0; i < ready.length; i += 100){
+        const updates = {};
+        ready.slice(i, i + 100).forEach(r => {
+          const lKey = push(ref(db, 'lmis_learners')).key;
+          const eKey = push(ref(db, 'lmis_enrollments')).key;
+          updates[`lmis_learners/${lKey}`] = { name: r.name, email: r.email, phone: r.phone, createdAt: serverTimestamp() };
+          updates[`lmis_enrollments/${eKey}`] = { learnerId: lKey, courseId: r.courseId, status: 'active', progressPct: 0, lastActivityAt: Date.now() };
+        });
+        await update(ref(db), updates);
+      }
+    });
+    const n = ready.length;
+    bulkRows = []; bulkLastJson = [];
+    document.getElementById('bulk-file-input').value = '';
+    document.getElementById('bulk-file-name').textContent = '';
+    bulkRender();
+    const sumEl = document.getElementById('bulk-summary');
+    sumEl.style.display = 'block';
+    sumEl.textContent = `Imported ${n} learner${n === 1 ? '' : 's'} successfully.`;
+  } catch (err){
+    console.error(err);
+    alert('Import failed: ' + (err.message || err));
+    btn.disabled = false;
+    btn.textContent = 'Retry import';
+  }
 });
 
 document.getElementById('course-form').addEventListener('submit', async (e) => {
