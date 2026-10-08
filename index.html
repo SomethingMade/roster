@@ -530,6 +530,18 @@
   .pill.completed{background:var(--violet-tint);color:var(--violet);}
   .pill.at-risk{background:var(--coral-tint);color:var(--coral);}
   .pill.withdrawn{background:var(--canvas-line);color:var(--text-soft);}
+  .pill.suspended{background:var(--amber-tint);color:var(--amber);}
+  .btn-danger{padding:9px 18px;background:var(--coral-tint);color:var(--coral);border:1px solid var(--coral);border-radius:var(--pill);font-size:13px;font-weight:600;cursor:pointer;}
+  .btn-danger:hover{background:var(--coral);color:#fff;}
+  .btn-danger:disabled,.btn-soft:disabled{opacity:.55;cursor:default;}
+  .btn-soft{padding:9px 18px;background:#fff;color:var(--ink);border:1px solid var(--line-strong);border-radius:var(--pill);font-size:13px;font-weight:600;cursor:pointer;}
+  .btn-soft:hover{background:var(--canvas);}
+  .bulk-bar{display:none;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;margin-bottom:10px;background:var(--violet-tint);border-radius:14px;font-size:13px;font-weight:600;color:var(--ink);}
+  .bulk-bar.show{display:flex;}
+  .sel-col{width:36px;}
+  .sel-col input{width:16px;height:16px;accent-color:var(--violet);cursor:pointer;}
+  tr.is-suspended td{opacity:.65;}
+
   .pill.not-submitted{background:var(--canvas-line);color:var(--text-soft);}
   .pill.submitted{background:var(--amber-tint);color:var(--amber);}
   .pill.approved{background:var(--teal-tint);color:var(--teal);}
@@ -1103,6 +1115,7 @@
           <option value="active">Active</option>
           <option value="completed">Completed</option>
           <option value="at-risk">At risk</option>
+          <option value="suspended">Suspended</option>
           <option value="withdrawn">Withdrawn</option>
         </select>
         <div class="fill-space"></div>
@@ -1119,10 +1132,17 @@
           Enroll learner
         </button>
       </div>
+      <div class="bulk-bar" id="learner-bulk-bar">
+        <span id="learner-bulk-count">0 selected</span>
+        <button class="btn-soft" id="bulk-suspend-btn">Suspend</button>
+        <button class="btn-soft" id="bulk-reinstate-btn">Reinstate</button>
+        <button class="btn-danger" id="bulk-delete-btn">Delete</button>
+        <button class="btn-soft" id="bulk-clear-btn">Clear</button>
+      </div>
       <div class="table-card">
       <table class="record-table">
         <thead>
-          <tr><th>Name</th><th>Course</th><th>Facilitator</th><th>Progress</th><th>Status</th></tr>
+          <tr><th class="sel-col"><input type="checkbox" id="learner-select-all" title="Select all"></th><th>Name</th><th>Course</th><th>Facilitator</th><th>Progress</th><th>Status</th></tr>
         </thead>
         <tbody id="learners-tbody"></tbody>
       </table>
@@ -1588,6 +1608,7 @@ let cachedApplications = {};
 let cachedAnnouncements = {};
 let cachedMessages = {};
 let expandedEnrollmentId = null;
+const selectedEnrollmentIds = new Set();
 let expandedPoeEnrollmentId = null;
 let expandedEnquiryId = null;
 let poeCourseFilterInitialized = false;
@@ -1892,6 +1913,7 @@ function renderLearnersSkeleton(){
   document.getElementById('learners-empty').style.display = 'none';
   document.getElementById('learners-tbody').innerHTML = [1,2,3,4].map(() => `
     <tr>
+      <td></td>
       <td>${skel('120px','14px')}<div style="margin-top:6px;">${skel('80px','11px')}</div></td>
       <td>${skel('100px','14px')}</td>
       <td>${skel('90px','14px')}</td>
@@ -2131,8 +2153,10 @@ function renderLearnersPage(){
   });
 
   tbody.innerHTML = '';
+  window.__visibleLearnerRows = rows.map(r => r.id);
   if (rows.length === 0){
     emptyEl.style.display = 'block';
+    updateLearnerBulkBar();
     return;
   }
   emptyEl.style.display = 'none';
@@ -2144,12 +2168,18 @@ function renderLearnersPage(){
     const pct = e.progressPct || 0;
 
     const tr = document.createElement('tr');
+    if (e.status === 'suspended') tr.className = 'is-suspended';
     tr.innerHTML = `
+      <td class="sel-col"><input type="checkbox" class="learner-sel" ${selectedEnrollmentIds.has(e.id) ? 'checked' : ''}></td>
       <td><div class="cell-name">${escapeHtml(learner.name)}</div><div class="cell-sub">${escapeHtml(learner.email||'')}</div></td>
       <td>${escapeHtml(course.title)}</td>
       <td>${escapeHtml(facilitator.name)}</td>
       <td><div class="mini-progress"><div class="track"><div class="fill" style="width:${pct}%"></div></div><span class="pct">${pct}%</span></div></td>
       <td><span class="pill ${e.status}">${escapeHtml(statusLabel(e.status))}</span></td>`;
+    const selBox = tr.querySelector('.learner-sel');
+    selBox.addEventListener('click', ev => ev.stopPropagation());
+    selBox.addEventListener('change', () => { selBox.checked ? selectedEnrollmentIds.add(e.id) : selectedEnrollmentIds.delete(e.id); updateLearnerBulkBar(); });
+    tr.querySelector('.sel-col').addEventListener('click', ev => ev.stopPropagation());
     tr.addEventListener('click', () => toggleDetailRow(e.id, tr));
     tbody.appendChild(tr);
 
@@ -2157,10 +2187,12 @@ function renderLearnersPage(){
       tbody.appendChild(buildDetailRow(e));
     }
   });
+  window.__visibleLearnerRows = rows.map(r => r.id);
+  updateLearnerBulkBar();
 }
 
 function statusLabel(s){
-  return { active:'Active', completed:'Completed', 'at-risk':'At risk', withdrawn:'Withdrawn' }[s] || 'Active';
+  return { active:'Active', completed:'Completed', 'at-risk':'At risk', suspended:'Suspended', withdrawn:'Withdrawn' }[s] || 'Active';
 }
 
 function toggleDetailRow(id, tr){
@@ -2172,7 +2204,7 @@ function buildDetailRow(e){
   const tr = document.createElement('tr');
   tr.className = 'detail-row';
   const td = document.createElement('td');
-  td.colSpan = 5;
+  td.colSpan = 6;
   td.innerHTML = `
     <div class="detail-panel">
       <div class="detail-col">
@@ -2185,10 +2217,15 @@ function buildDetailRow(e){
           <option value="active" ${e.status==='active'?'selected':''}>Active</option>
           <option value="completed" ${e.status==='completed'?'selected':''}>Completed</option>
           <option value="at-risk" ${e.status==='at-risk'?'selected':''}>At risk</option>
+          <option value="suspended" ${e.status==='suspended'?'selected':''}>Suspended</option>
           <option value="withdrawn" ${e.status==='withdrawn'?'selected':''}>Withdrawn</option>
         </select>
       </div>
       <button class="detail-save" id="detail-save-${e.id}">Save changes</button>
+    </div>
+    <div class="detail-actions" style="justify-content:flex-start;margin:0 0 10px;">
+      <button class="btn-soft" id="detail-suspend-${e.id}">${e.status === 'suspended' ? 'Reinstate learner' : 'Suspend learner'}</button>
+      <button class="btn-danger" id="detail-delete-${e.id}">Delete learner</button>
     </div>
     ${buildLearnerProfileHtml(e)}
     ${buildLearnerPoeHtml(e)}`;
@@ -2196,6 +2233,8 @@ function buildDetailRow(e){
 
   setTimeout(() => {
     wireLearnerPoe(e, td);
+    document.getElementById(`detail-suspend-${e.id}`).addEventListener('click', () => suspendEnrollments([e.id], e.status !== 'suspended'));
+    document.getElementById(`detail-delete-${e.id}`).addEventListener('click', () => deleteEnrollments([e.id]));
     const rangeEl = document.getElementById(`detail-range-${e.id}`);
     const pctLabel = document.getElementById(`detail-pct-${e.id}`);
     rangeEl.addEventListener('input', () => { pctLabel.textContent = rangeEl.value + '%'; });
@@ -2218,6 +2257,88 @@ function buildDetailRow(e){
 
   return tr;
 }
+
+// ---------------- SUSPEND / DELETE LEARNERS ----------------
+function learnerNameForEnrollment(id){
+  const en = cachedEnrollments[id] || {};
+  return (cachedLearners[en.learnerId] || {}).name || 'this learner';
+}
+async function suspendEnrollments(ids, suspend){
+  ids = ids.filter(id => cachedEnrollments[id]);
+  if (!ids.length) return;
+  const label = ids.length === 1 ? learnerNameForEnrollment(ids[0]) : `${ids.length} learners`;
+  if (suspend && !confirm(`Suspend ${label}? They stay on the list but are marked Suspended and won't count as active.`)) return;
+  const updates = {};
+  ids.forEach(id => {
+    const en = cachedEnrollments[id];
+    if (suspend){
+      if (en.status === 'suspended') return;
+      updates[`lmis_enrollments/${id}/statusBeforeSuspend`] = en.status || 'active';
+      updates[`lmis_enrollments/${id}/status`] = 'suspended';
+      updates[`lmis_enrollments/${id}/suspendedAt`] = Date.now();
+    } else {
+      if (en.status !== 'suspended') return;
+      updates[`lmis_enrollments/${id}/status`] = en.statusBeforeSuspend || 'active';
+      updates[`lmis_enrollments/${id}/statusBeforeSuspend`] = null;
+      updates[`lmis_enrollments/${id}/suspendedAt`] = null;
+    }
+    updates[`lmis_enrollments/${id}/lastActivityAt`] = Date.now();
+  });
+  if (!Object.keys(updates).length) return;
+  try {
+    await withDataOverlay(suspend ? 'Suspending…' : 'Reinstating…', async () => { await update(ref(db), updates); });
+    expandedEnrollmentId = null;
+    selectedEnrollmentIds.clear();
+    renderLearnersPage();
+  } catch (err){ console.error(err); alert('Could not update: ' + (err.message || err)); }
+}
+async function deleteEnrollments(ids){
+  ids = ids.filter(id => cachedEnrollments[id]);
+  if (!ids.length) return;
+  const label = ids.length === 1 ? learnerNameForEnrollment(ids[0]) : `${ids.length} learners`;
+  if (!confirm(`Permanently delete ${label}?\n\nThis removes the enrolment and POE progress. If the learner isn't enrolled in any other course, their profile, messages and interventions are removed too. This can't be undone.`)) return;
+  const idSet = new Set(ids);
+  const updates = {};
+  const learnerIds = new Set();
+  ids.forEach(id => {
+    updates[`lmis_enrollments/${id}`] = null;
+    updates[`lmis_poe_status/${id}`] = null;
+    learnerIds.add(cachedEnrollments[id].learnerId);
+  });
+  learnerIds.forEach(lid => {
+    if (!lid) return;
+    const stillEnrolled = Object.entries(cachedEnrollments).some(([eid, en]) => en.learnerId === lid && !idSet.has(eid));
+    if (stillEnrolled) return;
+    updates[`lmis_learners/${lid}`] = null;
+    updates[`lmis_messages/${lid}`] = null;
+    Object.entries(cachedInterventions).forEach(([ivId, iv]) => { if (iv.learnerId === lid) updates[`lmis_interventions/${ivId}`] = null; });
+  });
+  try {
+    await withDataOverlay('Deleting…', async () => { await update(ref(db), updates); });
+    ids.forEach(id => selectedEnrollmentIds.delete(id));
+    expandedEnrollmentId = null;
+  } catch (err){ console.error(err); alert('Could not delete: ' + (err.message || err)); }
+}
+function updateLearnerBulkBar(){
+  [...selectedEnrollmentIds].forEach(id => { if (!cachedEnrollments[id]) selectedEnrollmentIds.delete(id); });
+  const n = selectedEnrollmentIds.size;
+  const bar = document.getElementById('learner-bulk-bar');
+  bar.classList.toggle('show', n > 0);
+  document.getElementById('learner-bulk-count').textContent = `${n} selected`;
+  const visible = window.__visibleLearnerRows || [];
+  const all = document.getElementById('learner-select-all');
+  all.checked = visible.length > 0 && visible.every(id => selectedEnrollmentIds.has(id));
+  all.indeterminate = !all.checked && visible.some(id => selectedEnrollmentIds.has(id));
+}
+document.getElementById('learner-select-all').addEventListener('change', (ev) => {
+  const visible = window.__visibleLearnerRows || [];
+  visible.forEach(id => ev.target.checked ? selectedEnrollmentIds.add(id) : selectedEnrollmentIds.delete(id));
+  renderLearnersPage();
+});
+document.getElementById('bulk-suspend-btn').addEventListener('click', () => suspendEnrollments([...selectedEnrollmentIds], true));
+document.getElementById('bulk-reinstate-btn').addEventListener('click', () => suspendEnrollments([...selectedEnrollmentIds], false));
+document.getElementById('bulk-delete-btn').addEventListener('click', () => deleteEnrollments([...selectedEnrollmentIds]));
+document.getElementById('bulk-clear-btn').addEventListener('click', () => { selectedEnrollmentIds.clear(); renderLearnersPage(); });
 
 // ---------------- LEARNER PROFILE (full SETA record) ----------------
 const PROFILE_GROUPS = [
