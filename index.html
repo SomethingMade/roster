@@ -611,6 +611,17 @@
   .poe-check-row select:focus{border-color:var(--violet);}
   .poe-save-row{display:flex;justify-content:flex-end;margin-top:12px;}
 
+  /* ---------- Learner POE (inside learner detail row) ---------- */
+  .learner-poe{background:var(--canvas);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:0 0 10px;}
+  .learner-poe-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+  .learner-poe-head h3{font-size:15px;font-weight:600;color:var(--ink);margin:0;}
+  .poe-course-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px 24px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line-strong);}
+  .poe-course-grid .k{font-size:11.5px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;}
+  .poe-course-grid .v{font-size:13.5px;color:var(--ink);font-weight:500;word-break:break-word;}
+  .learner-poe .poe-bar{height:6px;border-radius:99px;background:var(--line-strong);overflow:hidden;margin:0 0 12px;}
+  .learner-poe .poe-bar>div{height:100%;background:var(--violet);border-radius:99px;}
+  .learner-poe .poe-none{font-size:13px;color:var(--text-soft);padding:6px 0;}
+
   /* ---------- Enquiry detail actions ---------- */
   .detail-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;flex-wrap:wrap;}
   .btn-convert{
@@ -2148,10 +2159,12 @@ function buildDetailRow(e){
         </select>
       </div>
       <button class="detail-save" id="detail-save-${e.id}">Save changes</button>
-    </div>`;
+    </div>
+    ${buildLearnerPoeHtml(e)}`;
   tr.appendChild(td);
 
   setTimeout(() => {
+    wireLearnerPoe(e, td);
     const rangeEl = document.getElementById(`detail-range-${e.id}`);
     const pctLabel = document.getElementById(`detail-pct-${e.id}`);
     rangeEl.addEventListener('input', () => { pctLabel.textContent = rangeEl.value + '%'; });
@@ -2173,6 +2186,82 @@ function buildDetailRow(e){
   }, 0);
 
   return tr;
+}
+
+// ---------------- LEARNER POE (under each learner) ----------------
+function formatCourseDate(d){
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt) ? escapeHtml(d) : dt.toLocaleDateString('en-ZA', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function buildLearnerPoeHtml(e){
+  const course = cachedCourses[e.courseId] || {};
+  const facilitator = cachedFacilitators[course.facilitatorId] || {};
+  const verifier = (cachedVerifiers[(cachedVerifierAssignments[e.courseId] || {}).verifierId] || {});
+  const sme = (cachedSmes[(cachedSmeAssignments[e.courseId] || {}).smeId] || {});
+  const items = poeItemsForCourse(e.courseId);
+  const statusMap = cachedPoeStatus[e.id] || {};
+  const approved = items.filter(([itemId]) => (statusMap[itemId] || {}).status === 'approved').length;
+  const pct = items.length ? Math.round((approved / items.length) * 100) : 0;
+
+  const field = (k, v) => `<div><div class="k">${k}</div><div class="v">${v || '—'}</div></div>`;
+  const grid = [
+    field('Course', escapeHtml(course.title || 'Unknown course')),
+    field('Facilitator', escapeHtml(facilitator.name || 'Unassigned')),
+    field('Verifier', escapeHtml(verifier.name || 'Not assigned')),
+    field('SME', escapeHtml(sme.name || 'Not assigned')),
+    field('Start date', formatCourseDate(course.startDate)),
+    field('End date', formatCourseDate(course.endDate)),
+    field('Enrolment status', escapeHtml(statusLabel(e.status))),
+    field('Course progress', (e.progressPct || 0) + '%'),
+    field('Last activity', e.lastActivityAt ? timeAgo(e.lastActivityAt) : '—')
+  ].join('');
+
+  const rows = items.map(([itemId, item]) => {
+    const current = (statusMap[itemId] || {}).status || 'not-submitted';
+    const opt = (v, label) => `<option value="${v}" ${current===v?'selected':''}>${label}</option>`;
+    return `
+      <div class="poe-check-row">
+        <div class="item-label">${escapeHtml(item.label || 'Evidence item')}</div>
+        <div class="item-controls">
+          <select data-item-id="${itemId}">
+            ${opt('not-submitted','Not submitted')}${opt('submitted','Submitted')}${opt('approved','Approved')}${opt('rejected','Rejected')}
+          </select>
+        </div>
+      </div>`;
+  }).join('');
+
+  const body = items.length
+    ? `<div class="poe-bar"><div style="width:${pct}%"></div></div>
+       <div class="poe-checklist">${rows}</div>
+       <div class="poe-save-row"><button class="detail-save" id="lpoe-save-${e.id}">Save POE</button></div>`
+    : `<div class="poe-none">No evidence requirements for this course yet. Add them on the POE page.</div>`;
+
+  return `
+    <div class="learner-poe">
+      <div class="learner-poe-head">
+        <h3>Portfolio of Evidence</h3>
+        <span class="pill poe-progress-pill ${items.length && approved === items.length ? 'approved' : 'submitted'}">${approved}/${items.length} approved</span>
+      </div>
+      <div class="poe-course-grid">${grid}</div>
+      ${body}
+    </div>`;
+}
+
+function wireLearnerPoe(e, td){
+  const saveBtn = document.getElementById(`lpoe-save-${e.id}`);
+  if (!saveBtn) return;
+  saveBtn.addEventListener('click', async () => {
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner"></span>Saving…';
+    const updates = {};
+    td.querySelectorAll('.learner-poe select[data-item-id]').forEach(sel => {
+      updates[`lmis_poe_status/${e.id}/${sel.dataset.itemId}`] = { status: sel.value, updatedAt: Date.now() };
+    });
+    updates[`lmis_enrollments/${e.id}/lastActivityAt`] = Date.now();
+    await withDataOverlay('Saving…', async () => { await update(ref(db), updates); });
+  });
 }
 
 // ---------------- COURSES PAGE ----------------
