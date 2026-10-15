@@ -291,6 +291,21 @@
   .nav-group.open .nav-sub{display:flex;}
   .nav-sub .nav-item{height:36px;}
 
+  /* ---------- Attendance register ---------- */
+  .att-stats{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px;}
+  .att-seg{display:inline-flex;gap:4px;flex-wrap:wrap;}
+  .att-btn{
+    border:1px solid var(--line);background:transparent;color:var(--ink-soft);
+    font:inherit;font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;
+    cursor:pointer;transition:background .15s ease,color .15s ease;
+  }
+  .att-btn:hover{background:var(--line);color:var(--ink);}
+  .att-btn:disabled{opacity:.5;cursor:default;}
+  .att-btn.on.present{background:var(--teal-tint);color:var(--teal);border-color:transparent;}
+  .att-btn.on.absent{background:var(--coral-tint);color:var(--coral);border-color:transparent;}
+  .att-btn.on.late{background:var(--amber-tint);color:var(--amber);border-color:transparent;}
+  .att-btn.on.excused{background:var(--violet-tint);color:var(--violet);border-color:transparent;}
+
   #main{
     flex:1;
     min-width:0;
@@ -1043,6 +1058,18 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
         <span class="nav-label">Topics</span>
       </div>
+      <div class="nav-item" data-page="lessons" title="Lessons">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5A1.5 1.5 0 0 1 4.5 4H11v15H4.5A1.5 1.5 0 0 1 3 17.5v-12Z"/><path d="M21 5.5A1.5 1.5 0 0 0 19.5 4H13v15h6.5a1.5 1.5 0 0 0 1.5-1.5v-12Z"/></svg>
+        <span class="nav-label">Lessons</span>
+      </div>
+      <div class="nav-item" data-page="sessions" title="Sessions">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17M12 13v3l2 1"/></svg>
+        <span class="nav-label">Sessions</span>
+      </div>
+      <div class="nav-item" data-page="attendance" title="Attendance">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="m16 11 2 2 4-4"/></svg>
+        <span class="nav-label">Attendance</span>
+      </div>
       </div>
     </div>
     </div>
@@ -1403,6 +1430,90 @@
       </div>
     </section>
 
+    <!-- ACADEMICS: LESSONS -->
+    <section class="page" id="page-lessons">
+      <div class="page-head">
+        <h1>Lessons</h1>
+        <button class="btn-add" id="open-lesson-modal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Add lesson</button>
+      </div>
+      <p class="sub" style="margin:-8px 0 16px;font-size:13px;color:var(--text-soft);">The individual lessons that make up each topic, in teaching order.</p>
+      <div class="toolbar">
+        <select id="filter-lesson-topic"><option value="">All topics</option></select>
+        <div class="fill-space"></div>
+        <span class="cell-sub" id="lessons-summary"></span>
+      </div>
+      <div class="table-card">
+      <table class="record-table">
+        <thead>
+          <tr><th>Lesson</th><th>Topic</th><th>Module</th><th>Duration</th><th></th></tr>
+        </thead>
+        <tbody id="lessons-tbody"></tbody>
+      </table>
+      </div>
+      <div class="empty-state" id="lessons-empty" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5A1.5 1.5 0 0 1 4.5 4H11v15H4.5A1.5 1.5 0 0 1 3 17.5v-12Z"/><path d="M21 5.5A1.5 1.5 0 0 0 19.5 4H13v15h6.5a1.5 1.5 0 0 0 1.5-1.5v-12Z"/></svg>
+        <span id="lessons-empty-text">No lessons yet — add the first one.</span>
+      </div>
+    </section>
+
+    <!-- ACADEMICS: SESSIONS -->
+    <section class="page" id="page-sessions">
+      <div class="page-head">
+        <h1>Sessions</h1>
+        <button class="btn-add" id="open-session-modal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Add session</button>
+      </div>
+      <p class="sub" style="margin:-8px 0 16px;font-size:13px;color:var(--text-soft);">Scheduled teaching sessions: when each lesson is delivered, by whom and where.</p>
+      <div class="toolbar">
+        <select id="filter-session-course"><option value="">All courses</option></select>
+        <select id="filter-session-status">
+          <option value="">All statuses</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <div class="fill-space"></div>
+        <span class="cell-sub" id="sessions-summary"></span>
+      </div>
+      <div class="table-card">
+      <table class="record-table">
+        <thead>
+          <tr><th>When</th><th>Session</th><th>Course</th><th>Facilitator</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody id="sessions-tbody"></tbody>
+      </table>
+      </div>
+      <div class="empty-state" id="sessions-empty" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17M12 13v3l2 1"/></svg>
+        <span id="sessions-empty-text">No sessions yet — schedule the first one.</span>
+      </div>
+    </section>
+
+    <!-- ACADEMICS: ATTENDANCE -->
+    <section class="page" id="page-attendance">
+      <div class="page-head">
+        <h1>Attendance</h1>
+        <button class="btn-add" id="att-mark-rest" disabled>Mark rest present</button>
+      </div>
+      <p class="sub" style="margin:-8px 0 16px;font-size:13px;color:var(--text-soft);">Take the register for a session. Marks save as you tap; tap a status again to clear it.</p>
+      <div class="toolbar">
+        <select id="filter-att-course"><option value="">All courses</option></select>
+        <select id="att-session"></select>
+      </div>
+      <div class="att-stats" id="att-stats"></div>
+      <div class="table-card">
+      <table class="record-table">
+        <thead>
+          <tr><th>Learner</th><th>Attendance</th><th>Overall</th></tr>
+        </thead>
+        <tbody id="attendance-tbody"></tbody>
+      </table>
+      </div>
+      <div class="empty-state" id="attendance-empty" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="m16 11 2 2 4-4"/></svg>
+        <span id="attendance-empty-text">Schedule a session first.</span>
+      </div>
+    </section>
+
     <!-- COMMUNICATION -->
     <section class="page" id="page-communication">
       <div class="page-head"><h1>Communication</h1></div>
@@ -1613,6 +1724,51 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="lesson-modal-overlay">
+  <div class="modal">
+    <h2 id="lesson-modal-title">Add a lesson</h2>
+    <form id="lesson-form">
+      <div class="field"><label>Topic</label><select id="lesson-topic" required></select></div>
+      <div class="field"><label>Lesson title</label><input type="text" id="lesson-title" required></div>
+      <div class="field"><label>Order in topic</label><input type="number" id="lesson-order" min="1" step="1" placeholder="1"></div>
+      <div class="field"><label>Duration (minutes)</label><input type="number" id="lesson-minutes" min="0" step="5"></div>
+      <div class="field"><label>Description</label><textarea id="lesson-desc" rows="3" placeholder="Objectives and what is covered in this lesson"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close="lesson-modal-overlay">Cancel</button>
+        <button type="submit" class="btn-primary" id="lesson-submit-btn" style="width:auto;">Add lesson</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="session-modal-overlay">
+  <div class="modal">
+    <h2 id="session-modal-title">Add a session</h2>
+    <form id="session-form">
+      <div class="field"><label>Course</label><select id="session-course" required></select></div>
+      <div class="field"><label>Lesson (optional)</label><select id="session-lesson"></select></div>
+      <div class="field"><label>Session title (optional)</label><input type="text" id="session-title" placeholder="Defaults to the lesson title"></div>
+      <div class="field"><label>Date</label><input type="date" id="session-date" required></div>
+      <div class="field"><label>Start time</label><input type="time" id="session-start"></div>
+      <div class="field"><label>End time</label><input type="time" id="session-end"></div>
+      <div class="field"><label>Facilitator</label><select id="session-facilitator"></select></div>
+      <div class="field"><label>Venue</label><input type="text" id="session-venue" placeholder="e.g. Room 3, or an online meeting link"></div>
+      <div class="field"><label>Status</label>
+        <select id="session-status">
+          <option value="scheduled">Scheduled</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="field"><label>Notes</label><textarea id="session-notes" rows="2"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close="session-modal-overlay">Cancel</button>
+        <button type="submit" class="btn-primary" id="session-submit-btn" style="width:auto;">Add session</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="modal-overlay" id="intervention-modal-overlay">
   <div class="modal">
     <h2 id="intervention-modal-title">Log an intervention</h2>
@@ -1729,6 +1885,9 @@ const storage = getStorage(app);
 // lmis_interventions/{id}    -> { learnerId, type, note, status, createdAt }
 // lmis_modules/{id}          -> { courseId, title, code, type, credits, description, createdAt }
 // lmis_topics/{id}           -> { moduleId, title, order, hours, description, createdAt }
+// lmis_lessons/{id}          -> { topicId, title, order, minutes, description, createdAt }
+// lmis_sessions/{id}         -> { courseId, lessonId?, title, date, startTime, endTime, facilitatorId, venue, status, notes, createdAt }
+// lmis_attendance/{sessionId}/{learnerId} -> { status: present|absent|late|excused, updatedAt }
 // lmis_verifiers/{id}        -> { name, email, phone, createdAt }
 // lmis_verifier_assignments/{courseId} -> { verifierId, assignedAt }
 // lmis_smes/{id}              -> { name, email, phone, createdAt }
@@ -1742,6 +1901,9 @@ let cachedVerifierAssignments = {};
 let cachedInterventions = {};
 let cachedModules = {};
 let cachedTopics = {};
+let cachedLessons = {};
+let cachedSessions = {};
+let cachedAttendance = {};
 let cachedFacilitators = {};
 let cachedCourses = {};
 let cachedLearners = {};
@@ -1758,7 +1920,7 @@ let expandedPoeEnrollmentId = null;
 let expandedEnquiryId = null;
 let poeCourseFilterInitialized = false;
 
-const dataLoaded = { topics:false, modules:false, facilitators:false, courses:false, learners:false, enrollments:false, poeItems:false, poeStatus:false, enquiries:false, applications:false, announcements:false, messages:false, interventions:false, verifiers:false, verifierAssignments:false, smes:false, smeAssignments:false };
+const dataLoaded = { attendance:false, lessons:false, sessions:false, topics:false, modules:false, facilitators:false, courses:false, learners:false, enrollments:false, poeItems:false, poeStatus:false, enquiries:false, applications:false, announcements:false, messages:false, interventions:false, verifiers:false, verifierAssignments:false, smes:false, smeAssignments:false };
 function allDataLoaded(){
   return dataLoaded.facilitators && dataLoaded.courses && dataLoaded.learners && dataLoaded.enrollments &&
     dataLoaded.poeItems && dataLoaded.poeStatus && dataLoaded.enquiries && dataLoaded.applications && dataLoaded.announcements && dataLoaded.messages && dataLoaded.interventions &&
@@ -2024,6 +2186,24 @@ function startDataListeners(){
     renderAllPages();
   });
 
+  onValue(ref(db, 'lmis_lessons'), (snap) => {
+    cachedLessons = snap.val() || {};
+    dataLoaded.lessons = true;
+    renderAllPages();
+  });
+
+  onValue(ref(db, 'lmis_sessions'), (snap) => {
+    cachedSessions = snap.val() || {};
+    dataLoaded.sessions = true;
+    renderAllPages();
+  });
+
+  onValue(ref(db, 'lmis_attendance'), (snap) => {
+    cachedAttendance = snap.val() || {};
+    dataLoaded.attendance = true;
+    renderAllPages();
+  });
+
   onValue(ref(db, 'lmis_verifiers'), (snap) => {
     cachedVerifiers = snap.val() || {};
     dataLoaded.verifiers = true;
@@ -2065,6 +2245,9 @@ function renderAllPages(){
   renderSmeManagementPage();
   renderModulesPage();
   renderTopicsPage();
+  renderLessonsPage();
+  renderSessionsPage();
+  renderAttendancePage();
 }
 
 // ---------------- SKELETON LOADERS ----------------
@@ -3022,12 +3205,17 @@ function renderModulesPage(){
   tbody.querySelectorAll('.module-delete').forEach(btn => {
     btn.addEventListener('click', async () => {
       const topicIds = Object.entries(cachedTopics).filter(([, t]) => t.moduleId === btn.dataset.id).map(([tid]) => tid);
-      const warn = topicIds.length ? `\n\nThis also deletes its ${topicIds.length} topic${topicIds.length===1?'':'s'}.` : '';
+      const lessonIds = lessonIdsForTopics(topicIds);
+      const parts = [];
+      if (topicIds.length) parts.push(`${topicIds.length} topic${topicIds.length===1?'':'s'}`);
+      if (lessonIds.length) parts.push(`${lessonIds.length} lesson${lessonIds.length===1?'':'s'}`);
+      const warn = parts.length ? `\n\nThis also deletes its ${parts.join(' and ')}.` : '';
       if (!confirm('Delete this module?' + warn)) return;
       btn.disabled = true;
       await withDataOverlay('Deleting…', async () => {
         const updates = { [`lmis_modules/${btn.dataset.id}`]: null };
         topicIds.forEach(tid => { updates[`lmis_topics/${tid}`] = null; });
+        addLessonDeletes(updates, lessonIds);
         await update(ref(db), updates);
       });
     });
@@ -3186,10 +3374,14 @@ function renderTopicsPage(){
   });
   tbody.querySelectorAll('.topic-delete').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (!confirm('Delete this topic?')) return;
+      const lessonIds = lessonIdsForTopics([btn.dataset.id]);
+      const warn = lessonIds.length ? `\n\nThis also deletes its ${lessonIds.length} lesson${lessonIds.length===1?'':'s'}.` : '';
+      if (!confirm('Delete this topic?' + warn)) return;
       btn.disabled = true;
       await withDataOverlay('Deleting…', async () => {
-        await remove(ref(db, `lmis_topics/${btn.dataset.id}`));
+        const updates = { [`lmis_topics/${btn.dataset.id}`]: null };
+        addLessonDeletes(updates, lessonIds);
+        await update(ref(db), updates);
       });
     });
   });
@@ -3258,6 +3450,621 @@ document.getElementById('topic-form').addEventListener('submit', async (e) => {
   editingTopicId = null;
   e.target.reset();
   closeModal('topic-modal-overlay');
+});
+
+// ---------------- LESSONS & SESSIONS (Academics) ----------------
+function lessonIdsForTopics(topicIds){
+  const set = new Set(topicIds);
+  return Object.entries(cachedLessons).filter(([, l]) => set.has(l.topicId)).map(([id]) => id);
+}
+// queue lesson deletions into a multi-path update, and detach those lessons from any sessions
+function addLessonDeletes(updates, lessonIds){
+  const set = new Set(lessonIds);
+  lessonIds.forEach(id => { updates[`lmis_lessons/${id}`] = null; });
+  Object.entries(cachedSessions).forEach(([sid, se]) => {
+    if (se.lessonId && set.has(se.lessonId)) updates[`lmis_sessions/${sid}/lessonId`] = null;
+  });
+}
+function fmtMinutes(n){
+  n = Number(n) || 0;
+  const h = Math.floor(n / 60), m = n % 60;
+  return h && m ? `${h}h ${m}m` : h ? `${h}h` : `${m}m`;
+}
+function lessonContext(l){
+  const t = cachedTopics[l.topicId] || null;
+  const m = t ? (cachedModules[t.moduleId] || null) : null;
+  const c = m ? (cachedCourses[m.courseId] || null) : null;
+  return { topic: t, module: m, course: c };
+}
+function lessonSortKey(l){
+  const { topic, module, course } = lessonContext(l);
+  return [
+    ((course || {}).title || '').toLowerCase(),
+    ((module || {}).title || '').toLowerCase(),
+    String(Number((topic || {}).order) || 9999).padStart(6, '0'),
+    ((topic || {}).title || '').toLowerCase(),
+    String(Number(l.order) || 9999).padStart(6, '0'),
+    String(l.createdAt || 0).padStart(16, '0')
+  ].join('|');
+}
+
+// ---- Lessons ----
+const filterLessonTopic = document.getElementById('filter-lesson-topic');
+let editingLessonId = null;
+
+// <option>s for every topic, grouped under "Course › Module"
+function lessonTopicOptions(){
+  const groups = {};
+  Object.entries(cachedTopics).forEach(([id, t]) => { (groups[t.moduleId] = groups[t.moduleId] || []).push([id, t]); });
+  return Object.entries(groups).map(([mid, ts]) => {
+    const m = cachedModules[mid] || {};
+    const c = cachedCourses[m.courseId] || {};
+    return { label: `${c.title || 'Unknown course'} › ${m.title || 'Unknown module'}`, ts };
+  }).sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()))
+    .map(g => `<optgroup label="${escapeHtml(g.label)}">` +
+      g.ts.sort((a, b) => (Number(a[1].order) || 9999) - (Number(b[1].order) || 9999) || (a[1].createdAt||0) - (b[1].createdAt||0))
+        .map(([id, t]) => `<option value="${id}">${escapeHtml(t.title || 'Untitled topic')}</option>`).join('') +
+      '</optgroup>').join('');
+}
+
+function renderLessonsPage(){
+  const tbody = document.getElementById('lessons-tbody');
+  const emptyEl = document.getElementById('lessons-empty');
+  const emptyText = document.getElementById('lessons-empty-text');
+  const summaryEl = document.getElementById('lessons-summary');
+
+  if (!allDataLoaded() || !dataLoaded.modules || !dataLoaded.topics || !dataLoaded.lessons){
+    emptyEl.style.display = 'none';
+    summaryEl.textContent = '';
+    tbody.innerHTML = [1,2,3].map(() => `
+      <tr>
+        <td>${skel('150px','14px')}</td><td>${skel('110px','14px')}</td>
+        <td>${skel('110px','14px')}</td><td>${skel('40px','14px')}</td><td>${skel('24px','24px')}</td>
+      </tr>`).join('');
+    return;
+  }
+
+  const prev = filterLessonTopic.value;
+  filterLessonTopic.innerHTML = '<option value="">All topics</option>' + lessonTopicOptions();
+  filterLessonTopic.value = cachedTopics[prev] ? prev : '';
+  const tFilter = filterLessonTopic.value;
+
+  let rows = Object.entries(cachedLessons).map(([id, l]) => ({ id, ...l }));
+  if (tFilter) rows = rows.filter(l => l.topicId === tFilter);
+  rows.sort((a, b) => lessonSortKey(a).localeCompare(lessonSortKey(b)));
+
+  tbody.innerHTML = '';
+  const totalMin = rows.reduce((n, l) => n + (Number(l.minutes) || 0), 0);
+  summaryEl.textContent = rows.length
+    ? `${rows.length} lesson${rows.length===1?'':'s'} · ${fmtMinutes(totalMin)}`
+    : '';
+
+  if (rows.length === 0){
+    emptyEl.style.display = 'block';
+    emptyText.textContent = Object.keys(cachedTopics).length === 0
+      ? 'Add a topic first, then add its lessons.'
+      : (tFilter ? 'No lessons for this topic yet — add one.' : 'No lessons yet — add the first one.');
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  rows.forEach(l => {
+    const { topic, module } = lessonContext(l);
+    const prefix = l.order !== undefined && l.order !== '' ? `${escapeHtml(String(l.order))}. ` : '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="cell-name">${prefix}${escapeHtml(l.title || 'Untitled lesson')}</div>
+          <div class="cell-sub">${escapeHtml(l.description || '—')}</div></td>
+      <td>${topic ? escapeHtml(topic.title || 'Untitled topic') : '<span class="cell-sub">Unknown topic</span>'}</td>
+      <td>${module ? escapeHtml(module.title || 'Untitled module') : '<span class="cell-sub">—</span>'}</td>
+      <td>${l.minutes !== undefined && l.minutes !== '' ? fmtMinutes(l.minutes) : '—'}</td>
+      <td><div class="iv-actions">
+        <button class="iv-icon-btn lesson-edit" data-id="${l.id}" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+        <button class="iv-icon-btn lesson-delete" data-id="${l.id}" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg></button>
+      </div></td>`;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('.lesson-edit').forEach(btn => {
+    btn.addEventListener('click', () => openLessonForEdit(btn.dataset.id));
+  });
+  tbody.querySelectorAll('.lesson-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const used = Object.values(cachedSessions).filter(se => se.lessonId === btn.dataset.id).length;
+      const warn = used ? `\n\n${used} session${used===1?' uses':'s use'} this lesson and will keep running without it.` : '';
+      if (!confirm('Delete this lesson?' + warn)) return;
+      btn.disabled = true;
+      await withDataOverlay('Deleting…', async () => {
+        const updates = {};
+        addLessonDeletes(updates, [btn.dataset.id]);
+        await update(ref(db), updates);
+      });
+    });
+  });
+}
+
+function fillLessonTopicSelect(selected){
+  const sel = document.getElementById('lesson-topic');
+  sel.innerHTML = lessonTopicOptions() || '<option value="">Add a topic first</option>';
+  if (selected && cachedTopics[selected]) sel.value = selected;
+  else if (filterLessonTopic.value && cachedTopics[filterLessonTopic.value]) sel.value = filterLessonTopic.value;
+}
+
+function openLessonForEdit(id){
+  const l = cachedLessons[id];
+  if (!l) return;
+  editingLessonId = id;
+  document.getElementById('lesson-modal-title').textContent = 'Edit lesson';
+  document.getElementById('lesson-submit-btn').textContent = 'Save changes';
+  fillLessonTopicSelect(l.topicId);
+  document.getElementById('lesson-title').value = l.title || '';
+  document.getElementById('lesson-order').value = l.order === undefined ? '' : l.order;
+  document.getElementById('lesson-minutes').value = l.minutes === undefined ? '' : l.minutes;
+  document.getElementById('lesson-desc').value = l.description || '';
+  openModal('lesson-modal-overlay');
+}
+
+filterLessonTopic.addEventListener('change', renderLessonsPage);
+
+document.getElementById('open-lesson-modal').addEventListener('click', () => {
+  editingLessonId = null;
+  document.getElementById('lesson-form').reset();
+  document.getElementById('lesson-modal-title').textContent = 'Add a lesson';
+  document.getElementById('lesson-submit-btn').textContent = 'Add lesson';
+  fillLessonTopicSelect();
+  const tid = document.getElementById('lesson-topic').value;
+  if (tid){
+    const n = Object.values(cachedLessons).filter(l => l.topicId === tid).length;
+    document.getElementById('lesson-order').value = n + 1;
+  }
+  openModal('lesson-modal-overlay');
+});
+
+document.getElementById('lesson-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const topicId = document.getElementById('lesson-topic').value;
+  const title = document.getElementById('lesson-title').value.trim();
+  const orderRaw = document.getElementById('lesson-order').value;
+  const minRaw = document.getElementById('lesson-minutes').value;
+  const order = orderRaw === '' ? '' : Number(orderRaw);
+  const minutes = minRaw === '' ? '' : Number(minRaw);
+  const description = document.getElementById('lesson-desc').value.trim();
+  if (!topicId || !title) return;
+
+  if (editingLessonId){
+    const id = editingLessonId;
+    await submitWithSpinner(e.target, 'Saving…', async () => {
+      await update(ref(db, `lmis_lessons/${id}`), { topicId, title, order, minutes, description });
+    });
+  } else {
+    await submitWithSpinner(e.target, 'Adding…', async () => {
+      const lRef = push(ref(db, 'lmis_lessons'));
+      await set(lRef, { topicId, title, order, minutes, description, createdAt: Date.now() });
+    });
+  }
+  editingLessonId = null;
+  e.target.reset();
+  closeModal('lesson-modal-overlay');
+});
+
+// ---- Sessions ----
+const SESSION_STATUS = { scheduled:'Scheduled', completed:'Completed', cancelled:'Cancelled' };
+const SESSION_PILL = { scheduled:'new', completed:'active', cancelled:'withdrawn' };
+const filterSessionCourse = document.getElementById('filter-session-course');
+const filterSessionStatus = document.getElementById('filter-session-status');
+let editingSessionId = null;
+
+function todayStr(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function fmtSessionDate(str){
+  if (!str) return '—';
+  const d = new Date(str + 'T00:00:00');
+  return isNaN(d) ? str : d.toLocaleDateString('en-ZA', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+}
+function sessionCourseOptions(){
+  return Object.entries(cachedCourses)
+    .map(([id, c]) => `<option value="${id}">${escapeHtml(c.title || 'Untitled course')}</option>`).join('');
+}
+// lessons belonging to a course, labelled "Topic — Lesson"
+function sessionLessonOptions(courseId){
+  const rows = Object.entries(cachedLessons)
+    .map(([id, l]) => ({ id, ...l }))
+    .filter(l => (lessonContext(l).course && lessonContext(l).module.courseId === courseId));
+  rows.sort((a, b) => lessonSortKey(a).localeCompare(lessonSortKey(b)));
+  return '<option value="">No specific lesson</option>' + rows.map(l => {
+    const { topic } = lessonContext(l);
+    return `<option value="${l.id}">${escapeHtml((topic ? topic.title + ' — ' : '') + (l.title || 'Untitled lesson'))}</option>`;
+  }).join('');
+}
+
+function renderSessionsPage(){
+  const tbody = document.getElementById('sessions-tbody');
+  const emptyEl = document.getElementById('sessions-empty');
+  const emptyText = document.getElementById('sessions-empty-text');
+  const summaryEl = document.getElementById('sessions-summary');
+
+  if (!allDataLoaded() || !dataLoaded.modules || !dataLoaded.topics || !dataLoaded.lessons || !dataLoaded.sessions){
+    emptyEl.style.display = 'none';
+    summaryEl.textContent = '';
+    tbody.innerHTML = [1,2,3].map(() => `
+      <tr>
+        <td>${skel('110px','14px')}</td><td>${skel('140px','14px')}</td><td>${skel('100px','14px')}</td>
+        <td>${skel('90px','14px')}</td><td>${skel('64px','20px')}</td><td>${skel('24px','24px')}</td>
+      </tr>`).join('');
+    return;
+  }
+
+  const prev = filterSessionCourse.value;
+  filterSessionCourse.innerHTML = '<option value="">All courses</option>' + sessionCourseOptions();
+  filterSessionCourse.value = cachedCourses[prev] ? prev : '';
+  const cFilter = filterSessionCourse.value;
+  const sFilter = filterSessionStatus.value;
+
+  let rows = Object.entries(cachedSessions).map(([id, se]) => ({ id, ...se }));
+  if (cFilter) rows = rows.filter(se => se.courseId === cFilter);
+  if (sFilter) rows = rows.filter(se => (se.status || 'scheduled') === sFilter);
+
+  // upcoming first (soonest at the top), then past sessions (most recent first)
+  const today = todayStr();
+  const key = se => `${se.date || ''} ${se.startTime || ''}`;
+  const upcoming = rows.filter(se => (se.date || '') >= today).sort((a, b) => key(a).localeCompare(key(b)));
+  const past = rows.filter(se => (se.date || '') < today).sort((a, b) => key(b).localeCompare(key(a)));
+  rows = upcoming.concat(past);
+
+  tbody.innerHTML = '';
+  summaryEl.textContent = rows.length
+    ? `${rows.length} session${rows.length===1?'':'s'}${upcoming.length ? ` · ${upcoming.length} upcoming` : ''}`
+    : '';
+
+  if (rows.length === 0){
+    emptyEl.style.display = 'block';
+    emptyText.textContent = Object.keys(cachedCourses).length === 0
+      ? 'Add a course first, then schedule its sessions.'
+      : ((cFilter || sFilter) ? 'No sessions match this filter.' : 'No sessions yet — schedule the first one.');
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  rows.forEach(se => {
+    const status = SESSION_STATUS[se.status] ? se.status : 'scheduled';
+    const lesson = se.lessonId ? cachedLessons[se.lessonId] : null;
+    const topic = lesson ? (cachedTopics[lesson.topicId] || null) : null;
+    const course = cachedCourses[se.courseId];
+    const fac = cachedFacilitators[se.facilitatorId];
+    const name = se.title || (lesson && lesson.title) || 'General session';
+    const subBits = [topic && topic.title, se.venue].filter(Boolean).join(' · ');
+    const time = se.startTime ? (se.endTime ? `${se.startTime} – ${se.endTime}` : se.startTime) : '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="cell-name">${escapeHtml(fmtSessionDate(se.date))}</div>
+          <div class="cell-sub">${escapeHtml(time || '—')}</div></td>
+      <td><div class="cell-name">${escapeHtml(name)}</div>
+          <div class="cell-sub">${escapeHtml(subBits || '—')}</div></td>
+      <td>${course ? escapeHtml(course.title) : '<span class="cell-sub">Unknown course</span>'}</td>
+      <td>${fac ? escapeHtml(fac.name) : '<span class="cell-sub">Unassigned</span>'}</td>
+      <td><span class="pill ${SESSION_PILL[status]}">${SESSION_STATUS[status]}</span></td>
+      <td><div class="iv-actions">
+        <button class="iv-icon-btn session-register" data-id="${se.id}" title="Take attendance">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4.5h6a1 1 0 0 1 1 1V6h1.5A1.5 1.5 0 0 1 19 7.5v12A1.5 1.5 0 0 1 17.5 21h-11A1.5 1.5 0 0 1 5 19.5v-12A1.5 1.5 0 0 1 6.5 6H8v-.5a1 1 0 0 1 1-1Z"/><path d="M9 13l2 2 4-4"/></svg>
+        </button>
+        <button class="iv-icon-btn session-toggle" data-id="${se.id}" data-status="${status}" title="${status === 'completed' ? 'Reopen' : 'Mark completed'}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </button>
+        <button class="iv-icon-btn session-edit" data-id="${se.id}" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+        <button class="iv-icon-btn session-delete" data-id="${se.id}" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg></button>
+      </div></td>`;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('.session-toggle').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      const next = btn.dataset.status === 'completed' ? 'scheduled' : 'completed';
+      await withDataOverlay('Saving…', async () => {
+        await update(ref(db, `lmis_sessions/${btn.dataset.id}`), { status: next });
+      });
+    });
+  });
+  tbody.querySelectorAll('.session-register').forEach(btn => {
+    btn.addEventListener('click', () => jumpToAttendance(btn.dataset.id));
+  });
+  tbody.querySelectorAll('.session-edit').forEach(btn => {
+    btn.addEventListener('click', () => openSessionForEdit(btn.dataset.id));
+  });
+  tbody.querySelectorAll('.session-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const marked = Object.keys(cachedAttendance[btn.dataset.id] || {}).length;
+      const warn = marked ? `\n\nThis also deletes its attendance register (${marked} mark${marked===1?'':'s'}).` : '';
+      if (!confirm('Delete this session?' + warn)) return;
+      btn.disabled = true;
+      await withDataOverlay('Deleting…', async () => {
+        await update(ref(db), {
+          [`lmis_sessions/${btn.dataset.id}`]: null,
+          [`lmis_attendance/${btn.dataset.id}`]: null
+        });
+      });
+    });
+  });
+}
+
+function fillSessionFacilitatorSelect(selected){
+  const sel = document.getElementById('session-facilitator');
+  const opts = Object.entries(cachedFacilitators)
+    .map(([id, f]) => `<option value="${id}">${escapeHtml(f.name || 'Unnamed')}</option>`).join('');
+  sel.innerHTML = '<option value="">Unassigned</option>' + opts;
+  sel.value = cachedFacilitators[selected] ? selected : '';
+}
+function refreshSessionLessonSelect(selectedLesson){
+  const courseId = document.getElementById('session-course').value;
+  const sel = document.getElementById('session-lesson');
+  sel.innerHTML = sessionLessonOptions(courseId);
+  sel.value = selectedLesson && cachedLessons[selectedLesson] ? selectedLesson : '';
+}
+
+filterSessionCourse.addEventListener('change', renderSessionsPage);
+filterSessionStatus.addEventListener('change', renderSessionsPage);
+
+// changing the course reloads its lessons and defaults to the course's facilitator
+document.getElementById('session-course').addEventListener('change', () => {
+  refreshSessionLessonSelect();
+  const course = cachedCourses[document.getElementById('session-course').value];
+  fillSessionFacilitatorSelect(course ? course.facilitatorId : '');
+});
+
+function fillSessionCourseSelect(selected){
+  const sel = document.getElementById('session-course');
+  sel.innerHTML = sessionCourseOptions() || '<option value="">Add a course first</option>';
+  if (selected && cachedCourses[selected]) sel.value = selected;
+  else if (filterSessionCourse.value && cachedCourses[filterSessionCourse.value]) sel.value = filterSessionCourse.value;
+}
+
+function openSessionForEdit(id){
+  const se = cachedSessions[id];
+  if (!se) return;
+  editingSessionId = id;
+  document.getElementById('session-modal-title').textContent = 'Edit session';
+  document.getElementById('session-submit-btn').textContent = 'Save changes';
+  fillSessionCourseSelect(se.courseId);
+  refreshSessionLessonSelect(se.lessonId);
+  fillSessionFacilitatorSelect(se.facilitatorId);
+  document.getElementById('session-title').value = se.title || '';
+  document.getElementById('session-date').value = se.date || '';
+  document.getElementById('session-start').value = se.startTime || '';
+  document.getElementById('session-end').value = se.endTime || '';
+  document.getElementById('session-venue').value = se.venue || '';
+  document.getElementById('session-status').value = SESSION_STATUS[se.status] ? se.status : 'scheduled';
+  document.getElementById('session-notes').value = se.notes || '';
+  openModal('session-modal-overlay');
+}
+
+document.getElementById('open-session-modal').addEventListener('click', () => {
+  editingSessionId = null;
+  document.getElementById('session-form').reset();
+  document.getElementById('session-modal-title').textContent = 'Add a session';
+  document.getElementById('session-submit-btn').textContent = 'Add session';
+  fillSessionCourseSelect();
+  refreshSessionLessonSelect();
+  const course = cachedCourses[document.getElementById('session-course').value];
+  fillSessionFacilitatorSelect(course ? course.facilitatorId : '');
+  document.getElementById('session-date').value = todayStr();
+  openModal('session-modal-overlay');
+});
+
+document.getElementById('session-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const courseId = document.getElementById('session-course').value;
+  const lessonId = document.getElementById('session-lesson').value;
+  const title = document.getElementById('session-title').value.trim();
+  const date = document.getElementById('session-date').value;
+  const startTime = document.getElementById('session-start').value;
+  const endTime = document.getElementById('session-end').value;
+  const facilitatorId = document.getElementById('session-facilitator').value;
+  const venue = document.getElementById('session-venue').value.trim();
+  const status = document.getElementById('session-status').value;
+  const notes = document.getElementById('session-notes').value.trim();
+  if (!courseId || !date) return;
+  if (startTime && endTime && endTime <= startTime){
+    alert('End time must be after the start time.');
+    return;
+  }
+  const data = { courseId, lessonId, title, date, startTime, endTime, facilitatorId, venue, status, notes };
+
+  if (editingSessionId){
+    const id = editingSessionId;
+    await submitWithSpinner(e.target, 'Saving…', async () => {
+      await update(ref(db, `lmis_sessions/${id}`), data);
+    });
+  } else {
+    await submitWithSpinner(e.target, 'Adding…', async () => {
+      const sRef = push(ref(db, 'lmis_sessions'));
+      await set(sRef, { ...data, createdAt: Date.now() });
+    });
+  }
+  editingSessionId = null;
+  e.target.reset();
+  closeModal('session-modal-overlay');
+});
+
+// ---------------- ATTENDANCE (Academics) ----------------
+const ATT_STATUS = { present:'Present', absent:'Absent', late:'Late', excused:'Excused' };
+const filterAttCourse = document.getElementById('filter-att-course');
+const attSessionSel = document.getElementById('att-session');
+const attMarkRestBtn = document.getElementById('att-mark-rest');
+let attSessionId = '';
+
+function attSessionName(se){
+  const lesson = se.lessonId ? cachedLessons[se.lessonId] : null;
+  return se.title || (lesson && lesson.title) || 'General session';
+}
+
+// learners enrolled in a course (withdrawn ones only if they already have a mark)
+function attRoster(sessionId, courseId){
+  const marks = cachedAttendance[sessionId] || {};
+  const seen = new Set();
+  const rows = [];
+  Object.values(cachedEnrollments).forEach(en => {
+    if (en.courseId !== courseId || seen.has(en.learnerId)) return;
+    const l = cachedLearners[en.learnerId];
+    if (!l) return;
+    if (en.status === 'withdrawn' && !marks[en.learnerId]) return;
+    seen.add(en.learnerId);
+    rows.push({ id: en.learnerId, learner: l });
+  });
+  rows.sort((a, b) => (a.learner.name || '').toLowerCase().localeCompare((b.learner.name || '').toLowerCase()));
+  return rows;
+}
+
+// a learner's overall attendance in a course: present + late over all marked, non-cancelled sessions
+function attOverall(learnerId, courseId){
+  let marked = 0, attended = 0;
+  Object.entries(cachedSessions).forEach(([sid, se]) => {
+    if (se.courseId !== courseId || se.status === 'cancelled') return;
+    const m = (cachedAttendance[sid] || {})[learnerId];
+    if (!m) return;
+    marked++;
+    if (m.status === 'present' || m.status === 'late') attended++;
+  });
+  return { marked, attended, pct: marked ? Math.round(attended / marked * 100) : null };
+}
+
+function renderAttendancePage(){
+  const tbody = document.getElementById('attendance-tbody');
+  const emptyEl = document.getElementById('attendance-empty');
+  const emptyText = document.getElementById('attendance-empty-text');
+  const statsEl = document.getElementById('att-stats');
+
+  if (!allDataLoaded() || !dataLoaded.sessions || !dataLoaded.attendance){
+    emptyEl.style.display = 'none';
+    statsEl.innerHTML = '';
+    attMarkRestBtn.disabled = true;
+    tbody.innerHTML = [1,2,3].map(() => `
+      <tr><td>${skel('140px','14px')}</td><td>${skel('220px','24px')}</td><td>${skel('50px','14px')}</td></tr>`).join('');
+    return;
+  }
+
+  // course filter (keeps current choice)
+  const prevCourse = filterAttCourse.value;
+  filterAttCourse.innerHTML = '<option value="">All courses</option>' + sessionCourseOptions();
+  filterAttCourse.value = cachedCourses[prevCourse] ? prevCourse : '';
+  const cFilter = filterAttCourse.value;
+
+  // sessions to choose from, most recent first
+  const sessions = Object.entries(cachedSessions)
+    .map(([id, se]) => ({ id, ...se }))
+    .filter(se => !cFilter || se.courseId === cFilter)
+    .sort((a, b) => `${b.date || ''} ${b.startTime || ''}`.localeCompare(`${a.date || ''} ${a.startTime || ''}`));
+
+  if (!sessions.find(se => se.id === attSessionId)){
+    // default: latest session on/before today, otherwise the earliest upcoming one
+    const today = todayStr();
+    const pastOrToday = sessions.find(se => (se.date || '') <= today);
+    attSessionId = pastOrToday ? pastOrToday.id : (sessions.length ? sessions[sessions.length - 1].id : '');
+  }
+
+  attSessionSel.innerHTML = sessions.length
+    ? sessions.map(se => {
+        const c = cachedCourses[se.courseId];
+        const label = `${fmtSessionDate(se.date)} · ${attSessionName(se)}${!cFilter && c ? ' — ' + c.title : ''}${se.status === 'cancelled' ? ' (cancelled)' : ''}`;
+        return `<option value="${se.id}">${escapeHtml(label)}</option>`;
+      }).join('')
+    : '<option value="">No sessions</option>';
+  attSessionSel.value = attSessionId;
+
+  tbody.innerHTML = '';
+  statsEl.innerHTML = '';
+  attMarkRestBtn.disabled = true;
+
+  const session = cachedSessions[attSessionId];
+  if (!session){
+    emptyEl.style.display = 'block';
+    emptyText.textContent = Object.keys(cachedSessions).length === 0
+      ? 'Schedule a session first (Academics › Sessions), then take its register here.'
+      : 'No sessions for this course yet.';
+    return;
+  }
+
+  const roster = attRoster(attSessionId, session.courseId);
+  if (roster.length === 0){
+    emptyEl.style.display = 'block';
+    emptyText.textContent = 'No learners are enrolled in this course yet.';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  const cancelled = session.status === 'cancelled';
+  const marks = cachedAttendance[attSessionId] || {};
+  const counts = { present:0, absent:0, late:0, excused:0, unmarked:0 };
+  roster.forEach(r => { const m = marks[r.id]; if (m && counts[m.status] !== undefined) counts[m.status]++; else counts.unmarked++; });
+  const attendedNow = counts.present + counts.late;
+  const markedNow = roster.length - counts.unmarked;
+
+  statsEl.innerHTML = cancelled
+    ? '<span class="pill withdrawn">This session was cancelled — attendance is locked</span>'
+    : `<span class="pill active">Present ${counts.present}</span>
+       <span class="pill suspended">Late ${counts.late}</span>
+       <span class="pill at-risk">Absent ${counts.absent}</span>
+       <span class="pill completed">Excused ${counts.excused}</span>
+       <span class="pill withdrawn">Unmarked ${counts.unmarked}</span>` +
+      (markedNow ? `<span class="cell-sub" style="align-self:center;">${Math.round(attendedNow / markedNow * 100)}% attended</span>` : '');
+
+  attMarkRestBtn.disabled = cancelled || counts.unmarked === 0;
+
+  roster.forEach(r => {
+    const current = (marks[r.id] || {}).status || '';
+    const overall = attOverall(r.id, session.courseId);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="cell-name">${escapeHtml(r.learner.name || 'Unnamed learner')}</div>
+          <div class="cell-sub">${escapeHtml(r.learner.email || r.learner.phone || '—')}</div></td>
+      <td><div class="att-seg">${Object.entries(ATT_STATUS).map(([k, label]) =>
+        `<button type="button" class="att-btn ${k}${current === k ? ' on' : ''}" data-learner="${r.id}" data-status="${k}"${cancelled ? ' disabled' : ''}>${label}</button>`).join('')}</div></td>
+      <td>${overall.pct === null ? '<span class="cell-sub">—</span>' : `${overall.pct}% <span class="cell-sub">(${overall.attended}/${overall.marked})</span>`}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('.att-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const learnerId = btn.dataset.learner, status = btn.dataset.status;
+      const path = `lmis_attendance/${attSessionId}/${learnerId}`;
+      const already = ((cachedAttendance[attSessionId] || {})[learnerId] || {}).status === status;
+      try {
+        if (already) await remove(ref(db, path));
+        else await set(ref(db, path), { status, updatedAt: Date.now() });
+      } catch (err) {
+        console.error(err);
+        alert('Could not save attendance. Please try again.');
+      }
+    });
+  });
+}
+
+function jumpToAttendance(sessionId){
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelector('.nav-item[data-page="attendance"]').classList.add('active');
+  document.getElementById('page-attendance').classList.add('active');
+  syncNavGroups();
+  closeDrawer();
+  filterAttCourse.value = '';
+  attSessionId = sessionId;
+  renderAttendancePage();
+}
+
+filterAttCourse.addEventListener('change', () => { attSessionId = ''; renderAttendancePage(); });
+attSessionSel.addEventListener('change', () => { attSessionId = attSessionSel.value; renderAttendancePage(); });
+
+attMarkRestBtn.addEventListener('click', async () => {
+  const session = cachedSessions[attSessionId];
+  if (!session || session.status === 'cancelled') return;
+  const marks = cachedAttendance[attSessionId] || {};
+  const updates = {};
+  attRoster(attSessionId, session.courseId).forEach(r => {
+    if (!marks[r.id]) updates[`lmis_attendance/${attSessionId}/${r.id}`] = { status: 'present', updatedAt: Date.now() };
+  });
+  if (!Object.keys(updates).length) return;
+  await withDataOverlay('Saving…', async () => { await update(ref(db), updates); });
 });
 
 // ---------------- POE PAGE ----------------
